@@ -268,12 +268,9 @@ struct imx_port {
 	struct imx_dma_rxbuf	rx_buf;
 	unsigned int		tx_bytes;
 	unsigned int		dma_tx_nents;
-	struct work_struct	tsk_dma_tx;
 	wait_queue_head_t	dma_wait;
 	unsigned int            saved_reg[10];
 	bool			context_saved;
-#define DMA_TX_IS_WORKING 1
-	unsigned long		flags;
 
 	/* RS485 fields */
 	unsigned int rs485_duplex_gpio;
@@ -407,6 +404,7 @@ static void imx_port_rts_auto(struct imx_port *sport, unsigned long *ucr2)
 	*ucr2 |= UCR2_CTSC;
 }
 
+static void imx_dma_tx(struct imx_port *sport);
 static enum hrtimer_restart imx_rs485_before_send(struct hrtimer *timer)
 {
 	struct imx_port *sport = container_of(timer, struct imx_port,
@@ -439,7 +437,7 @@ static enum hrtimer_restart imx_rs485_before_send(struct hrtimer *timer)
 
 		if (!uart_circ_empty(&sport->port.state->xmit) &&
 		    !uart_tx_stopped(&sport->port))
-			schedule_work(&sport->tsk_dma_tx);
+			imx_dma_tx(sport);
 	}
 
 out:
@@ -609,7 +607,7 @@ static inline void imx_transmit_buffer(struct imx_port *sport)
 			writel(temp, sport->port.membase + UCR1);
 		} else {
 			writel(temp, sport->port.membase + UCR1);
-			schedule_work(&sport->tsk_dma_tx);
+			imx_dma_tx(sport);
 		}
 	}
 
@@ -653,12 +651,11 @@ static void dma_tx_callback(void *data)
 
 	dev_dbg(sport->port.dev, "we finish the TX DMA.\n");
 
-	clear_bit(DMA_TX_IS_WORKING, &sport->flags);
 	smp_mb__after_atomic();
 	uart_write_wakeup(&sport->port);
 
 	if (!uart_circ_empty(xmit) && !uart_tx_stopped(&sport->port))
-		schedule_work(&sport->tsk_dma_tx);
+		imx_dma_tx(sport);
 	else if (sport->port.rs485.flags & SER_RS485_ENABLED) {
 		unsigned long temp;
 
@@ -675,22 +672,19 @@ static void dma_tx_callback(void *data)
 	}
 }
 
-static void dma_tx_work(struct work_struct *w)
+static void imx_dma_tx(struct imx_port *sport)
 {
-	struct imx_port *sport = container_of(w, struct imx_port, tsk_dma_tx);
 	struct circ_buf *xmit = &sport->port.state->xmit;
 	struct scatterlist *sgl = sport->tx_sgl;
 	struct dma_async_tx_descriptor *desc;
 	struct dma_chan	*chan = sport->dma_chan_tx;
 	struct device *dev = sport->port.dev;
-	unsigned long flags;
 	unsigned long temp;
 	int ret;
 
-	if (test_and_set_bit(DMA_TX_IS_WORKING, &sport->flags))
+	if (sport->dma_is_txing)
 		return;
 
-	spin_lock_irqsave(&sport->port.lock, flags);
 	sport->tx_bytes = uart_circ_chars_pending(xmit);
 
 	if (sport->tx_bytes > 0) {
@@ -704,7 +698,6 @@ static void dma_tx_work(struct work_struct *w)
 			sport->dma_tx_nents = 1;
 			sg_init_one(sgl, xmit->buf + xmit->tail, sport->tx_bytes);
 		}
-		spin_unlock_irqrestore(&sport->port.lock, flags);
 
 		ret = dma_map_sg(dev, sgl, sport->dma_tx_nents, DMA_TO_DEVICE);
 		if (ret == 0) {
@@ -733,9 +726,9 @@ static void dma_tx_work(struct work_struct *w)
 		writel(temp, sport->port.membase + UCR1);
 		return;
 	}
-	spin_unlock_irqrestore(&sport->port.lock, flags);
+
 err_out:
-	clear_bit(DMA_TX_IS_WORKING, &sport->flags);
+	sport->dma_is_txing = 0;
 	smp_mb__after_atomic();
 }
 
@@ -782,7 +775,7 @@ static void imx_start_tx(struct uart_port *port)
 
 		if (!uart_circ_empty(&port->state->xmit) &&
 		    !uart_tx_stopped(port))
-			schedule_work(&sport->tsk_dma_tx);
+			imx_dma_tx(sport);
 		return;
 	}
 }
@@ -1407,7 +1400,6 @@ static void imx_enable_dma(struct imx_port *sport)
 	unsigned long temp;
 
 	init_waitqueue_head(&sport->dma_wait);
-	sport->flags = 0;
 
 	/* set UCR1 */
 	temp = readl(sport->port.membase + UCR1);
@@ -1500,9 +1492,6 @@ static int imx_startup(struct uart_port *port)
 		&& !sport->dma_is_inited)
 		imx_uart_dma_init(sport);
 
-	if (sport->dma_is_inited)
-		INIT_WORK(&sport->tsk_dma_tx, dma_tx_work);
-
 	spin_lock_irqsave(&sport->port.lock, flags);
 
 	/*
@@ -1584,8 +1573,6 @@ static void imx_shutdown(struct uart_port *port)
 			dmaengine_terminate_all(sport->dma_chan_rx);
 		}
 
-		cancel_work_sync(&sport->tsk_dma_tx);
-
 		spin_lock_irqsave(&sport->port.lock, flags);
 		imx_stop_tx(port);
 		imx_stop_rx(port);
@@ -1657,7 +1644,6 @@ static void imx_flush_buffer(struct uart_port *port)
 		temp &= ~UCR1_TDMAEN;
 		writel(temp, sport->port.membase + UCR1);
 		sport->dma_is_txing = 0;
-		clear_bit(DMA_TX_IS_WORKING, &sport->flags);
 		smp_mb__after_atomic();
 	}
 
