@@ -206,6 +206,7 @@ struct hw_bank {
  * @wakeup_int: if wakeup interrupt occur
  * @rev: The revision number for controller
  * @mutex: protect code from concorrent running
+ * @hnp_enable: indicates if OTG full HNP is enabled
  */
 struct ci_hdrc {
 	struct device			*dev;
@@ -270,6 +271,7 @@ struct ci_hdrc {
 	u32				pm_usbmode;
 	struct work_struct		power_lost_work;
 	struct mutex			mutex;
+	bool				hnp_enable;
 };
 
 static inline struct ci_role_driver *ci_role(struct ci_hdrc *ci)
