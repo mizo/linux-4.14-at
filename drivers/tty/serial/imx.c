@@ -769,10 +769,30 @@ static irqreturn_t imx_rxint(int irq, void *dev_id)
 	unsigned int rx, flg, ignored = 0;
 	struct tty_port *port = &sport->port.state->port;
 	unsigned long flags, temp;
+	unsigned long ucr1;
+	int room;
+
+	room = tty_buffer_request_room(port, sport->port.fifosize);
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 
-	while (readl(sport->port.membase + USR2) & USR2_RDR) {
+	ucr1 = readl(sport->port.membase + UCR1);
+
+	if (!room) {
+		if (ucr1 & UCR1_RRDYEN) {
+			ucr1 &= ~UCR1_RRDYEN;
+			writel(ucr1, sport->port.membase + UCR1);
+		}
+		spin_unlock_irqrestore(&sport->port.lock, flags);
+		return IRQ_HANDLED;
+	}
+
+	if (~ucr1 & UCR1_RRDYEN) {
+		ucr1 |= UCR1_RRDYEN;
+		writel(ucr1, sport->port.membase + UCR1);
+	}
+
+	while ((readl(sport->port.membase + USR2) & USR2_RDR) && (room > 0)) {
 		flg = TTY_NORMAL;
 		sport->port.icount.rx++;
 
@@ -825,6 +845,7 @@ static irqreturn_t imx_rxint(int irq, void *dev_id)
 
 		if (tty_insert_flip_char(port, rx, flg) == 0)
 			sport->port.icount.buf_overrun++;
+		room--;
 	}
 
 out:
