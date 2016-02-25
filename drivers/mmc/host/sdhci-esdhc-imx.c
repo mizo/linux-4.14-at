@@ -300,6 +300,11 @@ static inline int is_imx6q_usdhc(struct pltfm_imx_data *data)
 	return data->socdata == &usdhc_imx6q_data;
 }
 
+static inline int is_imx7d_usdhc(struct pltfm_imx_data *data)
+{
+	return data->socdata == &usdhc_imx7d_data;
+}
+
 static inline int esdhc_is_usdhc(struct pltfm_imx_data *data)
 {
 	return !!(data->socdata->flags & ESDHC_FLAG_USDHC);
@@ -1215,6 +1220,10 @@ sdhci_esdhc_imx_probe_dt(struct platform_device *pdev,
 		host->quirks2 |= SDHCI_QUIRK2_SDIO_IRQ_THREAD;
 		dev_info(mmc_dev(host->mmc), "assigned as wifi host\n");
 	}
+
+	if (of_get_property(np, "use-sdio", NULL))
+		if (is_imx7d_usdhc(imx_data))
+			host->quirks |= SDHCI_QUIRK_BROKEN_ADMA;
 
 	return 0;
 }
