@@ -1217,8 +1217,13 @@ static int imx6_pcie_probe(struct platform_device *pdev)
 	/* Fetch GPIOs */
 	imx6_pcie->dis_gpio = of_get_named_gpio(node, "disable-gpio", 0);
 	if (gpio_is_valid(imx6_pcie->dis_gpio)) {
+		unsigned long flags;
+		if (of_property_read_bool(np, "disable-gpio-open-drain"))
+			flags = GPIOF_IN;
+		else
+			flags = GPIOF_OUT_INIT_HIGH;
 		ret = devm_gpio_request_one(&pdev->dev, imx6_pcie->dis_gpio,
-					    GPIOF_OUT_INIT_HIGH, "PCIe DIS");
+					    flags, "PCIe DIS");
 		if (ret) {
 			dev_err(&pdev->dev, "unable to get disable gpio\n");
 			return ret;
