@@ -744,6 +744,12 @@ static irqreturn_t imx_rtsint(int irq, void *dev_id)
 	writel(USR1_RTSD, sport->port.membase + USR1);
 	if (!(sport->port.rs485.flags & SER_RS485_ENABLED)) {
 		val = readl(sport->port.membase + USR1) & USR1_RTSS;
+
+		if (val)
+			sport->old_status |= TIOCM_CTS;
+		else
+			sport->old_status &= ~TIOCM_CTS;
+
 		uart_handle_cts_change(&sport->port, !!val);
 		wake_up_interruptible(&sport->port.state->port.delta_msr_wait);
 	}
