@@ -248,7 +248,7 @@ static void imx_set_panic_temp(struct imx_thermal_data *data,
 	int critical_value;
 
 	if (data->socdata->version == TEMPMON_IMX7)
-		critical_value = panic_temp / 1000 + data->c1 - 25;
+		critical_value = (panic_temp - 25 * 1000) / 870 + data->c1;
 	else
 		critical_value = (data->c2 - panic_temp) / data->c1;
 
@@ -268,7 +268,7 @@ static void imx_set_alarm_temp(struct imx_thermal_data *data,
 	data->alarm_temp = alarm_temp;
 
 	if (data->socdata->version == TEMPMON_IMX7)
-		alarm_value = alarm_temp / 1000 + data->c1 - 25;
+		alarm_value = (alarm_temp - 25 * 1000) / 870 + data->c1;
 	else
 		alarm_value = (data->c2 - alarm_temp) / data->c1;
 
@@ -343,7 +343,7 @@ static int imx_get_temp(struct thermal_zone_device *tz, int *temp)
 	/* See imx_get_sensor_data() for formula derivation */
 	*temp = data->c2 - n_meas * data->c1;
 	if (data->socdata->version == TEMPMON_IMX7)
-		*temp = (n_meas - data->c1 + 25) * 1000;
+		*temp = 25 * 1000 + 870 * (n_meas - data->c1);
 	else
 		*temp = data->c2 - n_meas * data->c1;
 
@@ -582,7 +582,7 @@ static inline void imx6_calibrate_data(struct imx_thermal_data *data, u32 val)
 
 /*
  * On i.MX7, we only use the calibration data at 25C to get the temp,
- * Tmeas = ( Nmeas - n1) + 25; n1 is the fuse value for 25C.
+ * Tmeas = 0.87 * ( Nmeas - n1) + 25; n1 is the fuse value for 25C.
  */
 static inline void imx7_calibrate_data(struct imx_thermal_data *data, u32 val)
 {
