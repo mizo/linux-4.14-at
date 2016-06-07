@@ -56,6 +56,17 @@
 #define MII_VSC8244_AUXCONSTAT_GBIT	0x0010
 #define MII_VSC8244_AUXCONSTAT_100	0x0008
 
+/* Vitesse LED Mode Select Register */
+#define MII_VSC8501_LED_SEL		0x1d
+#define MII_VSC8501_LEDSEL_LED2_SHIFT	(8)
+#define MII_VSC8501_LEDSEL_LED1_SHIFT	(4)
+#define MII_VSC8501_LEDSEL_LED0_SHIFT	(0)
+#define MII_VSC8501_LEDSEL_LED2_MASK	(0xf << MII_VSC8501_LEDSEL_LED2_SHIFT)
+#define MII_VSC8501_LEDSEL_LED1_MASK	(0xf << MII_VSC8501_LEDSEL_LED1_SHIFT)
+#define MII_VSC8501_LEDSEL_LED0_MASK	(0xf << MII_VSC8501_LEDSEL_LED0_SHIFT)
+#define MII_VSC8501_LEDSEL_FORCE_OFF	(14)
+#define MII_VSC8501_LEDSEL_FORCE_ON	(15)
+
 #define MII_VSC8221_AUXCONSTAT_INIT	0x0004 /* need to set this bit? */
 #define MII_VSC8221_AUXCONSTAT_RESERVED	0x0004
 
@@ -257,6 +268,53 @@ static int vsc82x4_config_aneg(struct phy_device *phydev)
 	return genphy_config_aneg(phydev);
 }
 
+static int vsc8501_read_status(struct phy_device *phydev)
+{
+	int ledsel;
+	int ret;
+
+	ret = genphy_read_status(phydev);
+	if (ret < 0) /* error */
+		return ret;
+
+	ledsel = phy_read(phydev, MII_VSC8501_LED_SEL);
+	if (ledsel < 0)
+		return ledsel;
+
+	ledsel &= ~(MII_VSC8501_LEDSEL_LED1_MASK |
+		    MII_VSC8501_LEDSEL_LED2_MASK);
+
+	if (!phydev->link)
+		goto out;
+
+	switch(phydev->speed) {
+	case SPEED_1000:
+		/* Orange */
+		ledsel |= MII_VSC8501_LEDSEL_FORCE_OFF <<
+			  MII_VSC8501_LEDSEL_LED1_SHIFT;
+		ledsel |= MII_VSC8501_LEDSEL_FORCE_ON <<
+			  MII_VSC8501_LEDSEL_LED2_SHIFT;
+		break;
+	case SPEED_100:
+		/* Green */
+		ledsel |= MII_VSC8501_LEDSEL_FORCE_ON <<
+			  MII_VSC8501_LEDSEL_LED1_SHIFT;
+		ledsel |= MII_VSC8501_LEDSEL_FORCE_OFF <<
+			  MII_VSC8501_LEDSEL_LED2_SHIFT;
+		break;
+	case SPEED_10:
+		/* off */
+		ledsel |= MII_VSC8501_LEDSEL_FORCE_OFF <<
+			  MII_VSC8501_LEDSEL_LED1_SHIFT;
+		ledsel |= MII_VSC8501_LEDSEL_FORCE_OFF <<
+			  MII_VSC8501_LEDSEL_LED2_SHIFT;
+		break;
+	};
+
+out:
+	return phy_write(phydev, MII_VSC8501_LED_SEL, ledsel);
+}
+
 /* Vitesse 82xx */
 static struct phy_driver vsc82xx_driver[] = {
 {
@@ -289,7 +347,7 @@ static struct phy_driver vsc82xx_driver[] = {
 	.flags          = PHY_HAS_INTERRUPT,
 	.config_init    = &vsc824x_config_init,
 	.config_aneg    = &vsc82x4_config_aneg,
-	.read_status    = &genphy_read_status,
+	.read_status    = &vsc8501_read_status,
 	.ack_interrupt  = &vsc824x_ack_interrupt,
 	.config_intr    = &vsc82xx_config_intr,
 	.driver         = { .owner = THIS_MODULE,},
