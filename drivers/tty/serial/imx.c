@@ -1073,12 +1073,20 @@ static void imx_break_ctl(struct uart_port *port, int break_state)
 
 #define TXTL 2 /* reset default */
 #define RXTL 1 /* For console port */
+#define TXTL_DMA 8 /* DMA burst setting */
 #define RXTL_UART 16 /* For uart */
 
 static int imx_setup_ufcr(struct imx_port *sport, unsigned int mode)
 {
 	unsigned int val;
+	unsigned int tx_fifo_trig;
 	unsigned int rx_fifo_trig;
+
+	/* Can we enable the DMA support? */
+	if (is_imx6q_uart(sport) && !uart_console(&sport->port))
+		tx_fifo_trig = TXTL_DMA;
+	else
+		tx_fifo_trig = TXTL;
 
 	if (uart_console(&sport->port))
 		rx_fifo_trig = RXTL;
@@ -1087,7 +1095,7 @@ static int imx_setup_ufcr(struct imx_port *sport, unsigned int mode)
 
 	/* set receiver / transmitter trigger level */
 	val = readl(sport->port.membase + UFCR) & (UFCR_RFDIV | UFCR_DCEDTE);
-	val |= TXTL << UFCR_TXTL_SHF | rx_fifo_trig;
+	val |= tx_fifo_trig << UFCR_TXTL_SHF | rx_fifo_trig;
 	writel(val, sport->port.membase + UFCR);
 	return 0;
 }
@@ -1333,7 +1341,7 @@ static int imx_uart_dma_init(struct imx_port *sport)
 	slave_config.direction = DMA_MEM_TO_DEV;
 	slave_config.dst_addr = sport->port.mapbase + URTX0;
 	slave_config.dst_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
-	slave_config.dst_maxburst = TXTL;
+	slave_config.dst_maxburst = TXTL_DMA;
 	ret = dmaengine_slave_config(sport->dma_chan_tx, &slave_config);
 	if (ret) {
 		dev_err(dev, "error in TX dma configuration.");
