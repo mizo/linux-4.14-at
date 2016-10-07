@@ -827,7 +827,14 @@ static int imx7_pm_enter(suspend_state_t state)
 
 static int imx7_pm_valid(suspend_state_t state)
 {
-	return state == PM_SUSPEND_STANDBY || state == PM_SUSPEND_MEM;
+	if (state == PM_SUSPEND_STANDBY)
+		return 1;
+
+	if (state == PM_SUSPEND_MEM &&
+	    imx_get_soc_revision() != IMX_CHIP_REVISION_1_1)
+		return 1;
+
+	return 0;
 }
 
 static const struct platform_suspend_ops imx7_pm_ops = {
