@@ -91,6 +91,12 @@ MODULE_DESCRIPTION("Vitesse PHY driver");
 MODULE_AUTHOR("Kriston Carson");
 MODULE_LICENSE("GPL");
 
+enum vsc8501_led_state {
+	VSC8501_LED_ORANGE,
+	VSC8501_LED_GREEN,
+	VSC8501_LED_OFF,
+};
+
 static int vsc824x_add_skew(struct phy_device *phydev)
 {
 	int err;
@@ -268,7 +274,8 @@ static int vsc82x4_config_aneg(struct phy_device *phydev)
 	return genphy_config_aneg(phydev);
 }
 
-static int vsc8501_read_status(struct phy_device *phydev)
+static int vsc8501_set_led(struct phy_device *phydev,
+			   enum vsc8501_led_state state)
 {
 	int ledsel;
 	int ret;
@@ -284,26 +291,20 @@ static int vsc8501_read_status(struct phy_device *phydev)
 	ledsel &= ~(MII_VSC8501_LEDSEL_LED1_MASK |
 		    MII_VSC8501_LEDSEL_LED2_MASK);
 
-	if (!phydev->link)
-		goto out;
-
-	switch(phydev->speed) {
-	case SPEED_1000:
-		/* Orange */
+	switch(state) {
+	case VSC8501_LED_ORANGE:
 		ledsel |= MII_VSC8501_LEDSEL_FORCE_OFF <<
 			  MII_VSC8501_LEDSEL_LED1_SHIFT;
 		ledsel |= MII_VSC8501_LEDSEL_FORCE_ON <<
 			  MII_VSC8501_LEDSEL_LED2_SHIFT;
 		break;
-	case SPEED_100:
-		/* Green */
+	case VSC8501_LED_GREEN:
 		ledsel |= MII_VSC8501_LEDSEL_FORCE_ON <<
 			  MII_VSC8501_LEDSEL_LED1_SHIFT;
 		ledsel |= MII_VSC8501_LEDSEL_FORCE_OFF <<
 			  MII_VSC8501_LEDSEL_LED2_SHIFT;
 		break;
-	case SPEED_10:
-		/* off */
+	case VSC8501_LED_OFF:
 		ledsel |= MII_VSC8501_LEDSEL_FORCE_OFF <<
 			  MII_VSC8501_LEDSEL_LED1_SHIFT;
 		ledsel |= MII_VSC8501_LEDSEL_FORCE_OFF <<
@@ -311,8 +312,30 @@ static int vsc8501_read_status(struct phy_device *phydev)
 		break;
 	};
 
-out:
 	return phy_write(phydev, MII_VSC8501_LED_SEL, ledsel);
+}
+
+static int vsc8501_read_status(struct phy_device *phydev)
+{
+	enum vsc8501_led_state state = VSC8501_LED_OFF;
+
+	if (!phydev->link)
+		goto out;
+
+	switch(phydev->speed) {
+	case SPEED_1000:
+		state = VSC8501_LED_ORANGE;
+		break;
+	case SPEED_100:
+		state = VSC8501_LED_GREEN;
+		break;
+	case SPEED_10:
+		/* LED_OFF */
+		break;
+	};
+
+out:
+	return vsc8501_set_led(phydev, state);
 }
 
 /* Vitesse 82xx */
