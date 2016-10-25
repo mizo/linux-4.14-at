@@ -338,6 +338,14 @@ out:
 	return vsc8501_set_led(phydev, state);
 }
 
+static int vsc8501_suspend(struct phy_device *phydev)
+{
+	/* turn off LED */
+	vsc8501_set_led(phydev, VSC8501_LED_OFF);
+
+	return genphy_suspend(phydev);
+}
+
 /* Vitesse 82xx */
 static struct phy_driver vsc82xx_driver[] = {
 {
@@ -377,7 +385,7 @@ static struct phy_driver vsc82xx_driver[] = {
 	.read_status    = &vsc8501_read_status,
 	.ack_interrupt  = &vsc824x_ack_interrupt,
 	.config_intr    = &vsc82xx_config_intr,
-	.suspend	= genphy_suspend,
+	.suspend	= &vsc8501_suspend,
 	.resume		= genphy_resume,
 }, {
 	.phy_id		= PHY_ID_VSC8514,
