@@ -100,6 +100,13 @@ config RESET_ZYNQ
 	help
 	  This enables the reset controller driver for Xilinx Zynq SoCs.
 
+config RESET_COLD
+	tristate "Cold Reset Driver"
+	default y
+	depends on REGULATOR && OF
+	help
+	  This enables the cold reset driver.
+
 source "drivers/reset/sti/Kconfig"
 source "drivers/reset/hisilicon/Kconfig"
 
