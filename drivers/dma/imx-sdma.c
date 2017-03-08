@@ -2293,7 +2293,7 @@ static int sdma_probe(struct platform_device *pdev)
 	sdma->dma_device.src_addr_widths = BIT(DMA_SLAVE_BUSWIDTH_4_BYTES);
 	sdma->dma_device.dst_addr_widths = BIT(DMA_SLAVE_BUSWIDTH_4_BYTES);
 	sdma->dma_device.directions = BIT(DMA_DEV_TO_MEM) | BIT(DMA_MEM_TO_DEV);
-	sdma->dma_device.residue_granularity = DMA_RESIDUE_GRANULARITY_BURST;
+	sdma->dma_device.residue_granularity = DMA_RESIDUE_GRANULARITY_SEGMENT;
 	sdma->dma_device.device_prep_dma_memcpy = sdma_prep_memcpy;
 	sdma->dma_device.device_prep_dma_sg = sdma_prep_memcpy_sg;
 	sdma->dma_device.device_issue_pending = sdma_issue_pending;
