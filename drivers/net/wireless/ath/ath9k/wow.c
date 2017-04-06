@@ -265,6 +265,7 @@ int ath9k_suspend(struct ieee80211_hw *hw,
 	 */
 	synchronize_irq(sc->irq);
 	tasklet_kill(&sc->intr_tq);
+	tasklet_kill(&sc->bcon_tasklet);
 
 	ath9k_hw_wow_enable(ah, triggers);
 
