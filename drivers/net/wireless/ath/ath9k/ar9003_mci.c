@@ -1428,7 +1428,7 @@ void ar9003_mci_set_power_awake(struct ath_hw *ah)
 	int i;
 	u8 lna_ctrl, bt_sleep;
 
-	for (i = 0; i < AH_WAIT_TIMEOUT; i++) {
+	for (i = 0; i < AH_WAIT_TIMEOUT / AH_TIME_QUANTUM; i++) {
 		btcoex_ctrl2 = REG_READ(ah, AR_BTCOEX_CTRL2);
 		if (btcoex_ctrl2 != 0xdeadbeef)
 			break;
@@ -1436,7 +1436,7 @@ void ar9003_mci_set_power_awake(struct ath_hw *ah)
 	}
 	REG_WRITE(ah, AR_BTCOEX_CTRL2, (btcoex_ctrl2 | BIT(23)));
 
-	for (i = 0; i < AH_WAIT_TIMEOUT; i++) {
+	for (i = 0; i < AH_WAIT_TIMEOUT / AH_TIME_QUANTUM; i++) {
 		diag_sw = REG_READ(ah, AR_DIAG_SW);
 		if (diag_sw != 0xdeadbeef)
 			break;
