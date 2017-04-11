@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#define CAL_FIX
+
 #include <asm/unaligned.h>
 #include "hw.h"
 #include "ar9003_phy.h"
@@ -4897,6 +4899,9 @@ static int ar9003_hw_calibration_apply(struct ath_hw *ah, int frequency)
 	int correction[AR9300_MAX_CHAINS],
 	    voltage[AR9300_MAX_CHAINS], temperature[AR9300_MAX_CHAINS];
 	int pfrequency, pcorrection, ptemperature, pvoltage;
+#ifdef CAL_FIX
+	int pfrequency_prev;
+#endif
 	struct ath_common *common = ath9k_hw_common(ah);
 
 	mode = (frequency >= 4000);
@@ -4911,10 +4916,18 @@ static int ar9003_hw_calibration_apply(struct ath_hw *ah, int frequency)
 	}
 	/* identify best lower and higher frequency calibration measurement */
 	for (ichain = 0; ichain < AR9300_MAX_CHAINS; ichain++) {
+#ifdef CAL_FIX
+		pfrequency_prev = 0;
+#endif
 		for (ipier = 0; ipier < npier; ipier++) {
 			if (!ar9003_hw_cal_pier_get(ah, mode, ipier, ichain,
 						    &pfrequency, &pcorrection,
 						    &ptemperature, &pvoltage)) {
+#ifdef CAL_FIX
+				if (pfrequency <= pfrequency_prev)
+					break;
+				pfrequency_prev = pfrequency;
+#endif
 				fdiff = frequency - pfrequency;
 
 				/*
