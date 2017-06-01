@@ -40,8 +40,9 @@ struct radar_types {
 #define PRF2PRI(PRF) ((1000000 + PRF / 2) / PRF)
 /* percentage of pulse width tolerance */
 #define WIDTH_TOLERANCE 5
-#define WIDTH_LOWER(X) ((X*(100-WIDTH_TOLERANCE)+50)/100)
-#define WIDTH_UPPER(X) ((X*(100+WIDTH_TOLERANCE)+50)/100)
+#define WIDTH_UPPER_OFFSET(X) ((X > 1) ? 2 : 0)
+#define WIDTH_LOWER(X) ((X > 1) ? ((X*(100-WIDTH_TOLERANCE)+50)/100) : 0)
+#define WIDTH_UPPER(X) ((X*(100+WIDTH_TOLERANCE)+50)/100 + WIDTH_UPPER_OFFSET(X))
 
 #define ETSI_PATTERN(ID, WMIN, WMAX, PMIN, PMAX, PRF, PPB, CHIRP)	\
 {								\
