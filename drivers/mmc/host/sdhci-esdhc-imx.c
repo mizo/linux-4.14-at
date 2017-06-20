@@ -1415,6 +1415,13 @@ static int sdhci_esdhc_imx_probe(struct platform_device *pdev)
 	pm_suspend_ignore_children(&pdev->dev, 1);
 	pm_runtime_enable(&pdev->dev);
 
+	/*
+	 * By default, forbid runtime-pm powers off.
+	 * sdhci_runtime_resume_host() call esdhc_pltfm_set_clock() in
+	 * interrupt disable section.
+	 */
+	pm_runtime_forbid(&pdev->dev);
+
 	return 0;
 
 disable_clk:
