@@ -24,6 +24,7 @@
 #include <linux/mmc/mmc.h>
 #include <linux/mmc/sdio.h>
 #include <linux/mmc/slot-gpio.h>
+#include <linux/mmc/card.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
 #include <linux/of_gpio.h>
@@ -32,6 +33,7 @@
 #include <linux/pm_runtime.h>
 #include "sdhci-pltfm.h"
 #include "sdhci-esdhc.h"
+#include "../core/core.h"
 
 #define ESDHC_SYS_CTRL_DTOCV_MASK	0x0f
 #define	ESDHC_CTRL_D3CD			0x08
@@ -1212,6 +1214,9 @@ sdhci_esdhc_imx_probe_dt(struct platform_device *pdev,
 	if (ret)
 		return ret;
 
+	if (of_get_property(np, "support-clk-limit", NULL))
+		boarddata->support_clk_limit = true;
+
 	if (mmc_gpio_get_cd(host->mmc) >= 0)
 		host->quirks &= ~SDHCI_QUIRK_BROKEN_CARD_DETECTION;
 
@@ -1302,6 +1307,69 @@ static int sdhci_esdhc_imx_probe_nondt(struct platform_device *pdev,
 	return 0;
 }
 
+static ssize_t
+store_max_freq(struct device *dev, struct device_attribute *attr,
+	       const char *buf, size_t count)
+{
+	struct mmc_host *mmc = container_of(dev, struct mmc_host, class_dev);
+	struct mmc_card *card = mmc->card;
+	struct sdhci_host *host = mmc_priv(mmc);
+	unsigned int timing;
+	unsigned int f_max;
+
+	if (!card)
+		return -ENODEV;
+
+	/* SD/SDIO UHS-I mode(SDR) only. */
+	if (mmc_card_mmc(card) || !mmc_card_uhs(card) ||
+	    (readl(host->ioaddr + ESDHC_MIX_CTRL) & ESDHC_MIX_CTRL_DDREN))
+		return -ENOTSUPP;
+
+	sscanf(buf, "%u", &f_max);
+
+	if ((esdhc_pltfm_get_max_clock(host) < f_max) ||
+	    (esdhc_pltfm_get_min_clock(host) > f_max) ||
+	    (card->sw_caps.uhs_max_dtr < f_max))
+		return -EINVAL;
+
+	mmc->f_max = f_max;
+
+	switch (f_max) {
+	case 0 ... UHS_SDR12_MAX_DTR:
+		timing = MMC_TIMING_UHS_SDR12;
+		break;
+	case UHS_SDR12_MAX_DTR + 1 ... UHS_SDR25_MAX_DTR:
+		timing = MMC_TIMING_UHS_SDR25;
+		break;
+	case UHS_SDR25_MAX_DTR + 1 ... UHS_SDR50_MAX_DTR:
+		timing = MMC_TIMING_UHS_SDR50;
+		break;
+	case UHS_SDR50_MAX_DTR + 1 ... UHS_SDR104_MAX_DTR:
+		timing = MMC_TIMING_UHS_SDR104;
+		break;
+	default:
+		timing = mmc->ios.timing;
+		break;
+	}
+
+	mmc_claim_host(mmc);
+	mmc_set_timing(mmc, timing);
+	mmc_set_clock(mmc, f_max);
+	mmc_release_host(mmc);
+
+	return count;
+}
+
+static ssize_t
+show_max_freq(struct device *dev, struct device_attribute *attr,
+	      char *buf)
+{
+	struct mmc_host *mmc = container_of(dev, struct mmc_host, class_dev);
+	return sprintf(buf, "%u\n", mmc->f_max);
+}
+
+static DEVICE_ATTR(max_freq, 0644, show_max_freq, store_max_freq);
+
 static int sdhci_esdhc_imx_probe(struct platform_device *pdev)
 {
 	const struct of_device_id *of_id =
@@ -1310,6 +1378,7 @@ static int sdhci_esdhc_imx_probe(struct platform_device *pdev)
 	struct sdhci_host *host;
 	int err;
 	struct pltfm_imx_data *imx_data;
+	struct esdhc_platform_data *boarddata;
 
 	host = sdhci_pltfm_init(pdev, &sdhci_esdhc_imx_pdata,
 				sizeof(*imx_data));
@@ -1409,6 +1478,14 @@ static int sdhci_esdhc_imx_probe(struct platform_device *pdev)
 	if (err)
 		goto disable_clk;
 
+	boarddata = &imx_data->boarddata;
+	if (boarddata->support_clk_limit) {
+		err = device_create_file(&host->mmc->class_dev,
+					 &dev_attr_max_freq);
+		if (err)
+			goto remove_host;
+	}
+
 	pm_runtime_set_active(&pdev->dev);
 	pm_runtime_set_autosuspend_delay(&pdev->dev, 50);
 	pm_runtime_use_autosuspend(&pdev->dev);
@@ -1423,6 +1500,9 @@ static int sdhci_esdhc_imx_probe(struct platform_device *pdev)
 	pm_runtime_forbid(&pdev->dev);
 
 	return 0;
+
+remove_host:
+	sdhci_remove_host(host, 0);
 
 disable_clk:
 	clk_disable_unprepare(imx_data->clk_per);
