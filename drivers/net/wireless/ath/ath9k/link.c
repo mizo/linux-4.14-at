@@ -307,7 +307,6 @@ void ath_ani_calibrate(unsigned long data)
 	bool aniflag = false;
 	unsigned int timestamp = jiffies_to_msecs(jiffies);
 	u32 cal_interval, short_cal_interval, long_cal_interval;
-	unsigned long flags;
 
 	if (ah->caldata && test_bit(NFCAL_INTF, &ah->caldata->cal_flags))
 		long_cal_interval = ATH_LONG_CALINTERVAL_INT;
@@ -320,16 +319,16 @@ void ath_ani_calibrate(unsigned long data)
 	/* Only calibrate if awake */
 	if (sc->sc_ah->power_mode != ATH9K_PM_AWAKE) {
 		if (++ah->ani_skip_count >= ATH_ANI_MAX_SKIP_COUNT) {
-			spin_lock_irqsave(&sc->sc_pm_lock, flags);
+			spin_lock_bh(&sc->sc_pm_lock);
 			sc->ps_flags |= PS_WAIT_FOR_ANI;
-			spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
+			spin_unlock_bh(&sc->sc_pm_lock);
 		}
 		goto set_timer;
 	}
 	ah->ani_skip_count = 0;
-	spin_lock_irqsave(&sc->sc_pm_lock, flags);
+	spin_lock_bh(&sc->sc_pm_lock);
 	sc->ps_flags &= ~PS_WAIT_FOR_ANI;
-	spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
+	spin_unlock_bh(&sc->sc_pm_lock);
 
 	ath9k_ps_wakeup(sc);
 

@@ -629,7 +629,6 @@ void ath9k_beacon_config(struct ath_softc *sc, struct ieee80211_vif *main_vif,
 	struct ath_vif *avp;
 	struct ath_chanctx *ctx;
 	struct ath_beacon_config *cur_conf;
-	unsigned long flags;
 	bool enabled;
 	bool skip_beacon = false;
 
@@ -671,9 +670,9 @@ void ath9k_beacon_config(struct ath_softc *sc, struct ieee80211_vif *main_vif,
 		 */
 		if (sc->sc_ah->opmode == NL80211_IFTYPE_ADHOC &&
 		    !enabled && beacons && !main_vif->bss_conf.ibss_creator) {
-			spin_lock_irqsave(&sc->sc_pm_lock, flags);
+			spin_lock_bh(&sc->sc_pm_lock);
 			sc->ps_flags |= PS_BEACON_SYNC | PS_WAIT_FOR_BEACON;
-			spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
+			spin_unlock_bh(&sc->sc_pm_lock);
 			skip_beacon = true;
 		}
 

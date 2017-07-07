@@ -1603,12 +1603,10 @@ out:
 void ath9k_p2p_bss_info_changed(struct ath_softc *sc,
 				struct ieee80211_vif *vif)
 {
-	unsigned long flags;
-
 	spin_lock_bh(&sc->sc_pcu_lock);
-	spin_lock_irqsave(&sc->sc_pm_lock, flags);
+	spin_lock_bh(&sc->sc_pm_lock);
 	ath9k_update_p2p_ps(sc, vif);
-	spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
+	spin_unlock_bh(&sc->sc_pm_lock);
 	spin_unlock_bh(&sc->sc_pcu_lock);
 }
 

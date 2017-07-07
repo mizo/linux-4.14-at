@@ -2506,7 +2506,6 @@ static void ath_tx_complete(struct ath_softc *sc, struct sk_buff *skb,
 	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 	struct ieee80211_hdr * hdr = (struct ieee80211_hdr *)skb->data;
 	int padpos, padsize;
-	unsigned long flags;
 
 	ath_dbg(common, XMIT, "TX complete: skb: %p\n", skb);
 
@@ -2533,7 +2532,7 @@ static void ath_tx_complete(struct ath_softc *sc, struct sk_buff *skb,
 		}
 	}
 
-	spin_lock_irqsave(&sc->sc_pm_lock, flags);
+	spin_lock_bh(&sc->sc_pm_lock);
 	if ((sc->ps_flags & PS_WAIT_FOR_TX_ACK) && !txq->axq_depth) {
 		sc->ps_flags &= ~PS_WAIT_FOR_TX_ACK;
 		ath_dbg(common, PS,
@@ -2543,7 +2542,7 @@ static void ath_tx_complete(struct ath_softc *sc, struct sk_buff *skb,
 					PS_WAIT_FOR_PSPOLL_DATA |
 					PS_WAIT_FOR_TX_ACK));
 	}
-	spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
+	spin_unlock_bh(&sc->sc_pm_lock);
 
 	ath_txq_skb_done(sc, txq, skb);
 	tx_info->status.status_driver_data[0] = sta;

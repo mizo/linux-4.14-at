@@ -960,6 +960,7 @@ struct ath_softc {
 	struct survey_info survey[ATH9K_NUM_CHANNELS];
 
 	struct tasklet_struct intr_tq;
+	struct tasklet_struct wakeup_tasklet;
 	struct tasklet_struct bcon_tasklet;
 	struct ath_hw *sc_ah;
 	void __iomem *mem;
@@ -1090,6 +1091,7 @@ static inline void ath_read_cachesize(struct ath_common *common, int *csz)
 }
 
 void ath9k_tasklet(unsigned long data);
+void ath9k_wakeup_tasklet(unsigned long data);
 int ath_cabq_update(struct ath_softc *);
 u8 ath9k_parse_mpdudensity(u8 mpdudensity);
 irqreturn_t ath_isr(int irq, void *dev);

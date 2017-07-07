@@ -1016,7 +1016,6 @@ int ath_rx_tasklet(struct ath_softc *sc, int flush, bool hp)
 	bool edma = !!(ah->caps.hw_caps & ATH9K_HW_CAP_EDMA);
 	int dma_type;
 	u64 tsf = 0;
-	unsigned long flags;
 	dma_addr_t new_buf_addr;
 	unsigned int budget = 512;
 	struct ieee80211_hdr *hdr;
@@ -1137,13 +1136,13 @@ int ath_rx_tasklet(struct ath_softc *sc, int flush, bool hp)
 		if (rxs->flag & RX_FLAG_MMIC_STRIPPED)
 			skb_trim(skb, skb->len - 8);
 
-		spin_lock_irqsave(&sc->sc_pm_lock, flags);
+		spin_lock_bh(&sc->sc_pm_lock);
 		if ((sc->ps_flags & (PS_WAIT_FOR_BEACON |
 				     PS_WAIT_FOR_CAB |
 				     PS_WAIT_FOR_PSPOLL_DATA)) ||
 		    ath9k_check_auto_sleep(sc))
 			ath_rx_ps(sc, skb, rs.is_mybeacon);
-		spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
+		spin_unlock_bh(&sc->sc_pm_lock);
 
 		ath9k_antenna_check(sc, &rs);
 		ath9k_apply_ampdu_details(sc, &rs, rxs);

@@ -81,18 +81,6 @@ out:
 	return pending;
 }
 
-static bool ath9k_setpower(struct ath_softc *sc, enum ath9k_power_mode mode)
-{
-	unsigned long flags;
-	bool ret;
-
-	spin_lock_irqsave(&sc->sc_pm_lock, flags);
-	ret = ath9k_hw_setpower(sc->sc_ah, mode);
-	spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
-
-	return ret;
-}
-
 void ath_ps_full_sleep(unsigned long data)
 {
 	struct ath_softc *sc = (struct ath_softc *) data;
@@ -112,10 +100,9 @@ void ath_ps_full_sleep(unsigned long data)
 void ath9k_ps_wakeup(struct ath_softc *sc)
 {
 	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
-	unsigned long flags;
 	enum ath9k_power_mode power_mode;
 
-	spin_lock_irqsave(&sc->sc_pm_lock, flags);
+	spin_lock_bh(&sc->sc_pm_lock);
 	if (++sc->ps_usecount != 1)
 		goto unlock;
 
@@ -137,16 +124,15 @@ void ath9k_ps_wakeup(struct ath_softc *sc)
 	}
 
  unlock:
-	spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
+	spin_unlock_bh(&sc->sc_pm_lock);
 }
 
 void ath9k_ps_restore(struct ath_softc *sc)
 {
 	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 	enum ath9k_power_mode mode;
-	unsigned long flags;
 
-	spin_lock_irqsave(&sc->sc_pm_lock, flags);
+	spin_lock_bh(&sc->sc_pm_lock);
 	if (--sc->ps_usecount != 0)
 		goto unlock;
 
@@ -175,7 +161,7 @@ void ath9k_ps_restore(struct ath_softc *sc)
 	ath9k_hw_setpower(sc->sc_ah, mode);
 
  unlock:
-	spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
+	spin_unlock_bh(&sc->sc_pm_lock);
 }
 
 static void __ath_cancel_work(struct ath_softc *sc)
@@ -231,7 +217,6 @@ static bool ath_complete_reset(struct ath_softc *sc, bool start)
 {
 	struct ath_hw *ah = sc->sc_ah;
 	struct ath_common *common = ath9k_hw_common(ah);
-	unsigned long flags;
 
 	ath9k_calculate_summary_state(sc, sc->cur_chan);
 	ath_startrecv(sc);
@@ -256,9 +241,9 @@ static bool ath_complete_reset(struct ath_softc *sc, bool start)
 
 		if (ah->opmode == NL80211_IFTYPE_STATION &&
 		    test_bit(ATH_OP_PRIM_STA_VIF, &common->op_flags)) {
-			spin_lock_irqsave(&sc->sc_pm_lock, flags);
+			spin_lock_bh(&sc->sc_pm_lock);
 			sc->ps_flags |= PS_BEACON_SYNC | PS_WAIT_FOR_BEACON;
-			spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
+			spin_unlock_bh(&sc->sc_pm_lock);
 		} else {
 			ath9k_set_beacon(sc);
 		}
@@ -290,6 +275,7 @@ static int ath_reset_internal(struct ath_softc *sc, struct ath9k_channel *hchan)
 	disable_irq(sc->irq);
 	tasklet_disable(&sc->intr_tq);
 	tasklet_disable(&sc->bcon_tasklet);
+	tasklet_disable(&sc->wakeup_tasklet);
 	spin_lock_bh(&sc->sc_pcu_lock);
 
 	if (!sc->cur_chan->offchannel) {
@@ -336,6 +322,7 @@ static int ath_reset_internal(struct ath_softc *sc, struct ath9k_channel *hchan)
 out:
 	enable_irq(sc->irq);
 	spin_unlock_bh(&sc->sc_pcu_lock);
+	tasklet_enable(&sc->wakeup_tasklet);
 	tasklet_enable(&sc->bcon_tasklet);
 	tasklet_enable(&sc->intr_tq);
 
@@ -427,7 +414,7 @@ void ath9k_tasklet(unsigned long data)
 		}
 	}
 
-	spin_lock_irqsave(&sc->sc_pm_lock, flags);
+	spin_lock(&sc->sc_pm_lock);
 	if ((status & ATH9K_INT_TSFOOR) && sc->ps_enabled) {
 		/*
 		 * TSF sync does not look correct; remain awake to sync with
@@ -436,7 +423,7 @@ void ath9k_tasklet(unsigned long data)
 		ath_dbg(common, PS, "TSFOOR - Sync with next Beacon\n");
 		sc->ps_flags |= PS_WAIT_FOR_BEACON | PS_BEACON_SYNC;
 	}
-	spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
+	spin_unlock(&sc->sc_pm_lock);
 
 	if (ah->caps.hw_caps & ATH9K_HW_CAP_EDMA)
 		rxmask = (ATH9K_INT_RXHP | ATH9K_INT_RXLP | ATH9K_INT_RXEOL |
@@ -483,8 +470,6 @@ out:
 	ath9k_ps_restore(sc);
 }
 
-irqreturn_t ath_isr(int irq, void *dev)
-{
 #define SCHED_INTR (				\
 		ATH9K_INT_FATAL |		\
 		ATH9K_INT_BB_WATCHDOG |		\
@@ -501,6 +486,29 @@ irqreturn_t ath_isr(int irq, void *dev)
 		ATH9K_INT_GENTIMER |		\
 		ATH9K_INT_MCI)
 
+void ath9k_wakeup_tasklet(unsigned long data)
+{
+	struct ath_softc *sc = (struct ath_softc *)data;
+	struct ath_hw *ah = sc->sc_ah;
+	u32 status = sc->intrstatus;
+
+	/* Clear RxAbort bit so that we can receive frames */
+	spin_lock(&sc->sc_pm_lock);
+	ath9k_hw_setpower(ah, ATH9K_PM_AWAKE);
+	ath9k_hw_setrxabort(ah, 0);
+	sc->ps_flags |= PS_WAIT_FOR_BEACON;
+	spin_unlock(&sc->sc_pm_lock);
+
+	if (!(status & SCHED_INTR)) {
+		/* re-enable hardware interrupt */
+		spin_lock(&sc->sc_pcu_lock);
+		ath9k_hw_enable_interrupts(ah);
+		spin_unlock(&sc->sc_pcu_lock);
+	}
+}
+
+irqreturn_t ath_isr(int irq, void *dev)
+{
 	struct ath_softc *sc = dev;
 	struct ath_hw *ah = sc->sc_ah;
 	struct ath_common *common = ath9k_hw_common(ah);
@@ -572,13 +580,9 @@ irqreturn_t ath_isr(int irq, void *dev)
 		if (status & ATH9K_INT_TIM_TIMER) {
 			if (ATH_DBG_WARN_ON_ONCE(sc->ps_idle))
 				goto chip_reset;
-			/* Clear RxAbort bit so that we can
-			 * receive frames */
-			ath9k_setpower(sc, ATH9K_PM_AWAKE);
-			spin_lock(&sc->sc_pm_lock);
-			ath9k_hw_setrxabort(sc->sc_ah, 0);
-			sc->ps_flags |= PS_WAIT_FOR_BEACON;
-			spin_unlock(&sc->sc_pm_lock);
+			/* turn off every interrupt */
+			ath9k_hw_disable_interrupts(ah);
+			tasklet_hi_schedule(&sc->wakeup_tasklet);
 		}
 
 chip_reset:
@@ -592,9 +596,9 @@ chip_reset:
 	}
 
 	return IRQ_HANDLED;
+}
 
 #undef SCHED_INTR
-}
 
 /*
  * This function is called when a HW reset cannot be deferred
@@ -752,7 +756,6 @@ static void ath9k_tx(struct ieee80211_hw *hw,
 	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 	struct ath_tx_control txctl;
 	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
-	unsigned long flags;
 
 	if (sc->ps_enabled) {
 		/*
@@ -775,7 +778,7 @@ static void ath9k_tx(struct ieee80211_hw *hw,
 		 * completed and if needed, also for RX of buffered frames.
 		 */
 		ath9k_ps_wakeup(sc);
-		spin_lock_irqsave(&sc->sc_pm_lock, flags);
+		spin_lock_bh(&sc->sc_pm_lock);
 		if (!(sc->sc_ah->caps.hw_caps & ATH9K_HW_CAP_AUTOSLEEP))
 			ath9k_hw_setrxabort(sc->sc_ah, 0);
 		if (ieee80211_is_pspoll(hdr->frame_control)) {
@@ -791,7 +794,7 @@ static void ath9k_tx(struct ieee80211_hw *hw,
 		 * the ps_flags bit is cleared. We are just dropping
 		 * the ps_usecount here.
 		 */
-		spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
+		spin_unlock_bh(&sc->sc_pm_lock);
 		ath9k_ps_restore(sc);
 	}
 
@@ -861,6 +864,7 @@ static void ath9k_stop(struct ieee80211_hw *hw)
 	synchronize_irq(sc->irq);
 	tasklet_kill(&sc->intr_tq);
 	tasklet_kill(&sc->bcon_tasklet);
+	tasklet_kill(&sc->wakeup_tasklet);
 
 	prev_idle = sc->ps_idle;
 	sc->ps_idle = true;
@@ -1035,7 +1039,6 @@ static void ath9k_set_assoc_state(struct ath_softc *sc,
 {
 	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
 	struct ath_vif *avp = (struct ath_vif *)vif->drv_priv;
-	unsigned long flags;
 
 	set_bit(ATH_OP_PRIM_STA_VIF, &common->op_flags);
 
@@ -1047,9 +1050,9 @@ static void ath9k_set_assoc_state(struct ath_softc *sc,
 		common->last_rssi = ATH_RSSI_DUMMY_MARKER;
 		sc->sc_ah->stats.avgbrssi = ATH_RSSI_DUMMY_MARKER;
 
-		spin_lock_irqsave(&sc->sc_pm_lock, flags);
+		spin_lock_bh(&sc->sc_pm_lock);
 		sc->ps_flags |= PS_BEACON_SYNC | PS_WAIT_FOR_BEACON;
-		spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
+		spin_unlock_bh(&sc->sc_pm_lock);
 	}
 
 	if (ath9k_hw_mci_is_enabled(sc->sc_ah))
@@ -1437,13 +1440,12 @@ static int ath9k_config(struct ieee80211_hw *hw, u32 changed)
 	 * IEEE80211_CONF_CHANGE_PS is only passed by mac80211 for STA mode.
 	 */
 	if (changed & IEEE80211_CONF_CHANGE_PS) {
-		unsigned long flags;
-		spin_lock_irqsave(&sc->sc_pm_lock, flags);
+		spin_lock_bh(&sc->sc_pm_lock);
 		if (conf->flags & IEEE80211_CONF_PS)
 			ath9k_enable_ps(sc);
 		else
 			ath9k_disable_ps(sc);
-		spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
+		spin_unlock_bh(&sc->sc_pm_lock);
 	}
 
 	if (changed & IEEE80211_CONF_CHANGE_MONITOR) {

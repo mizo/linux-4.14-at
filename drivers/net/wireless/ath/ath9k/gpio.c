@@ -198,15 +198,14 @@ static void ath_btcoex_period_timer(unsigned long data)
 	struct ath_btcoex *btcoex = &sc->btcoex;
 	enum ath_stomp_type stomp_type;
 	u32 timer_period;
-	unsigned long flags;
 
-	spin_lock_irqsave(&sc->sc_pm_lock, flags);
+	spin_lock_bh(&sc->sc_pm_lock);
 	if (sc->sc_ah->power_mode == ATH9K_PM_NETWORK_SLEEP) {
 		btcoex->bt_wait_time += btcoex->btcoex_period;
-		spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
+		spin_unlock_bh(&sc->sc_pm_lock);
 		goto skip_hw_wakeup;
 	}
-	spin_unlock_irqrestore(&sc->sc_pm_lock, flags);
+	spin_unlock_bh(&sc->sc_pm_lock);
 
 	ath9k_ps_wakeup(sc);
 	spin_lock_bh(&btcoex->btcoex_lock);
