@@ -51,16 +51,16 @@ static inline const struct imx_pin_group *imx_pinctrl_find_group_by_name(
 				struct imx_pinctrl_soc_info *info,
 				const char *name)
 {
-	const struct imx_pin_group *grp = NULL;
+	const struct imx_pin_group *grp;
 	int i;
 
 	for (i = 0; i < info->ngroups; i++) {
 		grp = radix_tree_lookup(&info->pgtree, i);
 		if (grp && !strcmp(grp->name, name))
-			break;
+			return grp;
 	}
 
-	return grp;
+	return NULL;
 }
 
 static int imx_get_groups_count(struct pinctrl_dev *pctldev)
