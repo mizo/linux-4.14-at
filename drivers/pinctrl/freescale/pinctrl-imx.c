@@ -63,6 +63,22 @@ static inline const struct imx_pin_group *imx_pinctrl_find_group_by_name(
 	return NULL;
 }
 
+static inline const struct imx_pmx_func *imx_pinctrl_find_function_by_name(
+				struct imx_pinctrl_soc_info *info,
+				const char *name)
+{
+	const struct imx_pmx_func *func;
+	int i;
+
+	for (i = 0; i < info->nfunctions; i++) {
+		func = radix_tree_lookup(&info->ftree, i);
+		if (func && !strcmp(func->name, name))
+			return func;
+	}
+
+	return NULL;
+}
+
 static int imx_get_groups_count(struct pinctrl_dev *pctldev)
 {
 	struct imx_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
@@ -112,6 +128,8 @@ static void imx_pin_dbg_show(struct pinctrl_dev *pctldev, struct seq_file *s,
 	seq_printf(s, "%s", dev_name(pctldev->dev));
 }
 
+static int imx_pinctrl_inject_function(struct device_node *np,
+				       struct imx_pinctrl_soc_info *info);
 static int imx_dt_node_to_map(struct pinctrl_dev *pctldev,
 			struct device_node *np,
 			struct pinctrl_map **map, unsigned *num_maps)
@@ -130,11 +148,19 @@ static int imx_dt_node_to_map(struct pinctrl_dev *pctldev,
 	 */
 	grp = imx_pinctrl_find_group_by_name(info, np->name);
 	if (!grp) {
+		if (!(pctldev->dev->of_node == np->parent)) {
+			imx_pinctrl_inject_function(np->parent, info);
+			grp = imx_pinctrl_find_group_by_name(info, np->name);
+			if (grp)
+				goto found_group;
+		}
+
 		dev_err(info->dev, "unable to find group for node %s\n",
 			np->name);
 		return -EINVAL;
 	}
 
+found_group:
 	for (i = 0; i < grp->npins; i++) {
 		if (!(grp->pins[i].config & IMX_NO_PAD_CTL))
 			map_num++;
@@ -716,6 +742,29 @@ static bool imx_pinctrl_dt_is_flat_functions(struct device_node *np)
 	}
 
 	return true;
+}
+
+static int imx_pinctrl_inject_function(struct device_node *np,
+				       struct imx_pinctrl_soc_info *info)
+{
+	struct imx_pmx_func *func;
+
+	if (imx_pinctrl_find_function_by_name(info, np->name)) {
+		dev_err(info->dev, "duplicated group name \'%s\'\n", np->name);
+		return -EINVAL;
+	}
+
+	func = devm_kzalloc(info->dev, sizeof(*func), GFP_KERNEL);
+	if (!func)
+		return -ENOMEM;
+
+	mutex_lock(&info->mutex);
+	radix_tree_insert(&info->ftree, info->nfunctions, func);
+	mutex_unlock(&info->mutex);
+
+	info->ngroups++;
+
+	return imx_pinctrl_parse_functions(np, info, info->nfunctions++);
 }
 
 static int imx_pinctrl_probe_dt(struct platform_device *pdev,
