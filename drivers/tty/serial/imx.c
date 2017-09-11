@@ -1497,12 +1497,16 @@ imx_set_termios(struct uart_port *port, struct ktermios *termios,
 		} else {
 			termios->c_cflag &= ~CRTSCTS;
 		}
-	} else if (port->rs485.flags & SER_RS485_ENABLED) {
-		/* disable transmitter */
-		if (port->rs485.flags & SER_RS485_RTS_AFTER_SEND)
-			imx_port_rts_inactive(sport, &ucr2);
-		else
+	} else {
+		if (port->rs485.flags & SER_RS485_ENABLED) {
+			/* disable transmitter */
+			if (port->rs485.flags & SER_RS485_RTS_AFTER_SEND)
+				imx_port_rts_inactive(sport, &ucr2);
+			else
+				imx_port_rts_active(sport, &ucr2);
+		} else {
 			imx_port_rts_active(sport, &ucr2);
+		}
 	}
 
 	if (termios->c_cflag & CSTOPB)
