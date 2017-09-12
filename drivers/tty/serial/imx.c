@@ -2109,6 +2109,7 @@ static int serial_imx_probe(struct platform_device *pdev)
 	int ret = 0, reg;
 	struct resource *res;
 	int txirq, rxirq, rtsirq;
+	struct gpio_desc *gpio;
 
 	sport = devm_kzalloc(&pdev->dev, sizeof(*sport), GFP_KERNEL);
 	if (!sport)
@@ -2148,6 +2149,15 @@ static int serial_imx_probe(struct platform_device *pdev)
 	sport->gpios = mctrl_gpio_init(&sport->port, 0);
 	if (IS_ERR(sport->gpios))
 		return PTR_ERR(sport->gpios);
+
+	gpio = devm_gpiod_get_optional(&pdev->dev, "rs485-rx-gate",
+				       GPIOD_OUT_HIGH);
+	if (IS_ERR(gpio)) {
+		ret = PTR_ERR(gpio);
+		dev_err(&pdev->dev, "failed to get rs485-rx-gate gpio: %d\n",
+			ret);
+		return ret;
+	}
 
 	sport->clk_ipg = devm_clk_get(&pdev->dev, "ipg");
 	if (IS_ERR(sport->clk_ipg)) {
