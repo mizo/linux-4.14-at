@@ -66,6 +66,16 @@
 			gpio = <&gpio4 15 GPIO_ACTIVE_HIGH>;
 			enable-active-high;
 		};
+
+		reg_sd1_vmmc: regulator-1 {
+			compatible = "regulator-fixed";
+			regulator-name = "VDD_SD1";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			gpio = <&gpio5 2 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
+			regulator-boot-on;
+		};
 	};
 
 	usdhc3_pwrseq: pwrseq@0 {
@@ -214,6 +224,21 @@
 	status = "okay";
 };
 
+&usdhc1 {
+	pinctrl-names = "default", "state_100mhz", "state_200mhz";
+	pinctrl-0 = <&pinctrl_usdhc1>;
+	pinctrl-1 = <&pinctrl_usdhc1_100mhz>;
+	pinctrl-2 = <&pinctrl_usdhc1_200mhz>;
+	cd-gpios = <&gpio5 0 GPIO_ACTIVE_LOW>;
+	wp-gpios = <&gpio5 1 GPIO_ACTIVE_HIGH>;
+	tuning-step = <2>;
+	vmmc-supply = <&reg_sd1_vmmc>;
+	enable-sdio-wakeup;
+	bus-width = <4>;
+	keep-power-in-suspend;
+	status = "okay";
+};
+
 &usdhc3 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usdhc3>;
@@ -228,8 +253,16 @@
 
 &iomuxc {
 	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog>;
 
 	imx7d-sdb {
+		pinctrl_hog: hoggrp {
+			fsl,pins = <
+				/* USDHC1 */
+				MX7D_PAD_GPIO1_IO08__SD1_VSELECT	0x59 /* VSELECT */
+			>;
+		};
+
 		pinctrl_enet2: enet2grp {
 			fsl,pins = <
 				MX7D_PAD_GPIO1_IO15__ENET2_MDC		0x3
@@ -267,6 +300,42 @@
 				MX7D_PAD_SAI1_RX_DATA__UART5_DCE_RX	0x79
 				MX7D_PAD_SAI1_TX_SYNC__UART5_DCE_CTS	0x79
 				MX7D_PAD_SAI1_TX_DATA__UART5_DCE_RTS	0x79
+			>;
+		};
+
+		pinctrl_usdhc1: usdhc1grp {
+			fsl,pins = <
+				MX7D_PAD_SD1_CMD__SD1_CMD	0x0a
+				MX7D_PAD_SD1_CLK__SD1_CLK	0x0a
+				MX7D_PAD_SD1_DATA0__SD1_DATA0	0x0a
+				MX7D_PAD_SD1_DATA1__SD1_DATA1	0x0a
+				MX7D_PAD_SD1_DATA2__SD1_DATA2	0x0a
+				MX7D_PAD_SD1_DATA3__SD1_DATA3	0x0a
+				MX7D_PAD_SD1_CD_B__GPIO5_IO0	0x00
+				MX7D_PAD_SD1_WP__GPIO5_IO1	0x00
+				MX7D_PAD_SD1_RESET_B__GPIO5_IO2	0x00
+			>;
+		};
+
+		pinctrl_usdhc1_100mhz: usdhc1grp_100mhz {
+			fsl,pins = <
+				MX7D_PAD_SD1_CMD__SD1_CMD	0x09
+				MX7D_PAD_SD1_CLK__SD1_CLK	0x0a
+				MX7D_PAD_SD1_DATA0__SD1_DATA0	0x09
+				MX7D_PAD_SD1_DATA1__SD1_DATA1	0x09
+				MX7D_PAD_SD1_DATA2__SD1_DATA2	0x09
+				MX7D_PAD_SD1_DATA3__SD1_DATA3	0x09
+			>;
+		};
+
+		pinctrl_usdhc1_200mhz: usdhc1grp_200mhz {
+			fsl,pins = <
+				MX7D_PAD_SD1_CMD__SD1_CMD	0x0b
+				MX7D_PAD_SD1_CLK__SD1_CLK	0x09
+				MX7D_PAD_SD1_DATA0__SD1_DATA0	0x0b
+				MX7D_PAD_SD1_DATA1__SD1_DATA1	0x0b
+				MX7D_PAD_SD1_DATA2__SD1_DATA2	0x0b
+				MX7D_PAD_SD1_DATA3__SD1_DATA3	0x0b
 			>;
 		};
 
