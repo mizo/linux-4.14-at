@@ -80,6 +80,27 @@
 	arm-supply = <&sw1a_reg>;
 };
 
+&fec2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_enet2>;
+	assigned-clocks = <&clks IMX7D_ENET2_TIME_ROOT_SRC>,
+			  <&clks IMX7D_ENET2_TIME_ROOT_CLK>;
+	assigned-clock-parents = <&clks IMX7D_PLL_ENET_MAIN_100M_CLK>;
+	assigned-clock-rates = <0>, <100000000>;
+	phy-mode = "rgmii";
+	phy-handle = <&ethphy0>;
+	fsl,magic-packet;
+	status = "okay";
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		ethphy0: ethernet-phy@0 {
+			reg = <0>;
+		};
+	};
+};
 
 &i2c4 {
 	pinctrl-names = "default";
@@ -209,6 +230,30 @@
 	pinctrl-names = "default";
 
 	imx7d-sdb {
+		pinctrl_enet2: enet2grp {
+			fsl,pins = <
+				MX7D_PAD_GPIO1_IO15__ENET2_MDC		0x3
+				MX7D_PAD_GPIO1_IO14__ENET2_MDIO		0x3
+
+				MX7D_PAD_EPDC_GDSP__ENET2_RGMII_TXC		0x1
+				MX7D_PAD_EPDC_GDRL__ENET2_RGMII_TX_CTL		0x1
+				MX7D_PAD_EPDC_SDCE2__ENET2_RGMII_TD0		0x1
+				MX7D_PAD_EPDC_SDCE3__ENET2_RGMII_TD1		0x1
+				MX7D_PAD_EPDC_GDCLK__ENET2_RGMII_TD2		0x1
+				MX7D_PAD_EPDC_GDOE__ENET2_RGMII_TD3		0x1
+
+				MX7D_PAD_EPDC_SDCE1__ENET2_RGMII_RXC		0x1
+				MX7D_PAD_EPDC_SDCE0__ENET2_RGMII_RX_CTL		0x1
+				MX7D_PAD_EPDC_SDCLK__ENET2_RGMII_RD0		0x1
+				MX7D_PAD_EPDC_SDLE__ENET2_RGMII_RD1		0x1
+				MX7D_PAD_EPDC_SDOE__ENET2_RGMII_RD2		0x1
+				MX7D_PAD_EPDC_SDSHR__ENET2_RGMII_RD3		0x1
+				MX7D_PAD_EPDC_BDR1__GPIO2_IO29 0x00 /* GPIO_LAN1_RST_N */
+				MX7D_PAD_EPDC_BDR0__GPIO2_IO28 0x00 /* GPIO_LAN1_INT_N */
+				MX7D_PAD_EPDC_PWR_COM__GPIO2_IO30 0x00 /* GPIO_LAN1_COMA_MODE */
+			>;
+		};
+
 		pinctrl_i2c4: i2c4grp {
 			fsl,pins = <
 				MX7D_PAD_GPIO1_IO11__I2C4_SDA	0x4000007f
@@ -275,5 +320,21 @@
 				MX7D_PAD_GPIO1_IO04__UART5_DCE_CTS	0x00
 			>;
 		};
+	};
+};
+
+&gpio2 {
+	lan1_int_n {
+		gpio-hog;
+		gpios = <28 GPIO_ACTIVE_HIGH>;
+		input;
+		line-name = "LAN1_INT_N";
+	};
+
+	lan1_coma_mode {
+		gpio-hog;
+		gpios = <30 GPIO_ACTIVE_HIGH>;
+		output-low;
+		line-name = "LAN1_COMA_MODE";
 	};
 };
