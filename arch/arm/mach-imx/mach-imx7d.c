@@ -12,6 +12,7 @@
 #include <linux/phy.h>
 #include <linux/pm_opp.h>
 #include <linux/regmap.h>
+#include <linux/micrel_phy.h>
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
@@ -61,6 +62,27 @@ static int bcm54220_phy_fixup(struct phy_device *dev)
 	return 0;
 }
 
+static void mmd_write_reg(struct phy_device *dev, int device, int reg, int val)
+{
+	phy_write(dev, 0x0d, device);
+	phy_write(dev, 0x0e, reg);
+	phy_write(dev, 0x0d, (1 << 14) | device);
+	phy_write(dev, 0x0e, val);
+}
+
+static int ksz9031rn_phy_fixup(struct phy_device *dev)
+{
+	/*
+	 * min rx data delay, max rx/tx clock delay,
+	 * min rx/tx control delay
+	 */
+	mmd_write_reg(dev, 2, 4, 0);
+	mmd_write_reg(dev, 2, 5, 0);
+	mmd_write_reg(dev, 2, 8, 0x003ff);
+
+	return 0;
+}
+
 #define PHY_ID_AR8031	0x004dd074
 #define PHY_ID_BCM54220	0x600d8589
 
@@ -71,6 +93,8 @@ static void __init imx7d_enet_phy_init(void)
 					   ar8031_phy_fixup);
 		phy_register_fixup_for_uid(PHY_ID_BCM54220, 0xffffffff,
 					   bcm54220_phy_fixup);
+		phy_register_fixup_for_uid(PHY_ID_KSZ9031, MICREL_PHY_ID_MASK,
+					   ksz9031rn_phy_fixup);
 	}
 }
 
