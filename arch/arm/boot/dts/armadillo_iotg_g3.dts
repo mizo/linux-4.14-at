@@ -225,12 +225,19 @@
 };
 
 &usdhc1 {
-	pinctrl-names = "default", "state_100mhz", "state_200mhz";
+	pinctrl-names = "default", "state_100mhz", "state_200mhz",
+			"state_power_off";
 	pinctrl-0 = <&pinctrl_usdhc1>;
 	pinctrl-1 = <&pinctrl_usdhc1_100mhz>;
 	pinctrl-2 = <&pinctrl_usdhc1_200mhz>;
+	pinctrl-3 = <&pinctrl_usdhc1_power_off>;
 	cd-gpios = <&gpio5 0 GPIO_ACTIVE_LOW>;
 	wp-gpios = <&gpio5 1 GPIO_ACTIVE_HIGH>;
+	pinctrl-assert-gpios = <&gpio5 4 GPIO_ACTIVE_LOW>,	/* SD1_CMD */
+			       <&gpio5 5 GPIO_ACTIVE_LOW>,	/* SD1_DATA0 */
+			       <&gpio5 6 GPIO_ACTIVE_LOW>,	/* SD1_DATA1 */
+			       <&gpio5 7 GPIO_ACTIVE_LOW>,	/* SD1_DATA2 */
+			       <&gpio5 8 GPIO_ACTIVE_LOW>;	/* SD1_DATA3 */
 	tuning-step = <2>;
 	vmmc-supply = <&reg_sd1_vmmc>;
 	enable-sdio-wakeup;
@@ -336,6 +343,16 @@
 				MX7D_PAD_SD1_DATA1__SD1_DATA1	0x0b
 				MX7D_PAD_SD1_DATA2__SD1_DATA2	0x0b
 				MX7D_PAD_SD1_DATA3__SD1_DATA3	0x0b
+			>;
+		};
+
+		pinctrl_usdhc1_power_off: usdhc1grp_power_off {
+			fsl,pins = <
+				MX7D_PAD_SD1_CMD__GPIO5_IO4	0x00
+				MX7D_PAD_SD1_DATA0__GPIO5_IO5	0x00
+				MX7D_PAD_SD1_DATA1__GPIO5_IO6	0x00
+				MX7D_PAD_SD1_DATA2__GPIO5_IO7	0x00
+				MX7D_PAD_SD1_DATA3__GPIO5_IO8	0x00
 			>;
 		};
 
