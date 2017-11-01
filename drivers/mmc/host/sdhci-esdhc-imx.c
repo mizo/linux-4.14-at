@@ -89,6 +89,7 @@
 /* pinctrl state */
 #define ESDHC_PINCTRL_STATE_100MHZ	"state_100mhz"
 #define ESDHC_PINCTRL_STATE_200MHZ	"state_200mhz"
+#define ESDHC_PINCTRL_STATE_POWER_OFF	"state_power_off"
 
 /*
  * Our interpretation of the SDHCI_HOST_CONTROL register
@@ -238,6 +239,7 @@ struct pltfm_imx_data {
 	struct pinctrl_state *pins_default;
 	struct pinctrl_state *pins_100mhz;
 	struct pinctrl_state *pins_200mhz;
+	struct pinctrl_state *pins_power_off;
 	const struct esdhc_soc_data *socdata;
 	struct esdhc_platform_data boarddata;
 	struct clk *clk_ipg;
@@ -892,6 +894,12 @@ static int esdhc_change_pinstate(struct sdhci_host *host,
 		IS_ERR(imx_data->pins_200mhz))
 		return -EINVAL;
 
+	if ((host->mmc->ios.power_mode == MMC_POWER_OFF) &&
+	    !IS_ERR(imx_data->pins_power_off)) {
+		pinctrl = imx_data->pins_power_off;
+		goto out;
+	}
+
 	switch (uhs) {
 	case MMC_TIMING_UHS_SDR50:
 	case MMC_TIMING_UHS_DDR50:
@@ -907,6 +915,7 @@ static int esdhc_change_pinstate(struct sdhci_host *host,
 		pinctrl = imx_data->pins_default;
 	}
 
+out:
 	return pinctrl_select_state(imx_data->pinctrl, pinctrl);
 }
 
@@ -1189,6 +1198,9 @@ sdhci_esdhc_imx_probe_dt(struct platform_device *pdev,
 	} else {
 		host->quirks2 |= SDHCI_QUIRK2_NO_1_8_V;
 	}
+
+	imx_data->pins_power_off = pinctrl_lookup_state(imx_data->pinctrl,
+						ESDHC_PINCTRL_STATE_POWER_OFF);
 
 	/* call to generic mmc_of_parse to support additional capabilities */
 	ret = mmc_of_parse(host->mmc);
