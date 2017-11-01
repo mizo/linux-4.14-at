@@ -243,6 +243,7 @@
 	enable-sdio-wakeup;
 	bus-width = <4>;
 	keep-power-in-suspend;
+	support-clk-limit;
 	status = "okay";
 };
 
