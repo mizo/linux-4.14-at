@@ -107,6 +107,8 @@ obj-$(CONFIG_SOC_IMX6UL) += mach-imx6ul.o ddr3_freq_imx6sx.o \
 obj-$(CONFIG_SOC_IMX7D) += mach-imx7d.o
 obj-$(CONFIG_SOC_IMX7ULP) += mach-imx7ulp.o pm-imx7ulp.o pm-rpmsg.o
 
+obj-$(CONFIG_AIOTG_ADDON_AUTO_DETECT) += armadillo_iotg_addon/
+
 ifeq ($(CONFIG_SUSPEND),y)
 AFLAGS_suspend-imx6.o :=-Wa,-march=armv7-a
 AFLAGS_suspend-imx7.o :=-Wa,-march=armv7-a

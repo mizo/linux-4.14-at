@@ -1,0 +1,124 @@
+/*
+ * Copyright (C) 2017 Atmark Techno, Inc. All Rights Reserved.
+ * Author: Daisuke Mizobuchi <mizo@atmark-techno.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * version 2 as published by the Free Software Foundation.
+ */
+
+#include "../../../../arch/arm/boot/dts/imx7d-pinfunc.h"
+
+/dts-v1/;
+/plugin/;
+/ {
+	fragment@0 {
+		target = <&iomuxc>;
+		__overlay__ {
+			addon-intf1 {
+				pinctrl_usdhc1: usdhc1grp {
+					fsl,pins = <
+						MX7D_PAD_SD1_CMD__SD1_CMD	0x0a /* INTF1_11 */
+						MX7D_PAD_SD1_CLK__SD1_CLK	0x0a /* INTF1_10 */
+						MX7D_PAD_SD1_DATA0__SD1_DATA0	0x0a /* INTF1_12 */
+						MX7D_PAD_SD1_DATA1__SD1_DATA1	0x0a /* INTF1_13 */
+						MX7D_PAD_SD1_DATA2__SD1_DATA2	0x0a /* INTF1_14 */
+						MX7D_PAD_SD1_DATA3__SD1_DATA3	0x0a /* INTF1_15 */
+						MX7D_PAD_SD1_CD_B__GPIO5_IO0	0x00 /* INTF1_7 */
+						MX7D_PAD_SD1_WP__GPIO5_IO1	0x00 /* INTF1_8 */
+						MX7D_PAD_SD1_RESET_B__GPIO5_IO2	0x00 /* INTF1_9 */
+						MX7D_PAD_GPIO1_IO08__SD1_VSELECT	0x59 /* on-board */
+					>;
+				};
+
+				pinctrl_usdhc1_100mhz: usdhc1grp_100mhz {
+					fsl,pins = <
+						MX7D_PAD_SD1_CMD__SD1_CMD	0x0a /* INTF1_11 */
+						MX7D_PAD_SD1_CLK__SD1_CLK	0x0a /* INTF1_10 */
+						MX7D_PAD_SD1_DATA0__SD1_DATA0	0x0a /* INTF1_12 */
+						MX7D_PAD_SD1_DATA1__SD1_DATA1	0x0a /* INTF1_13 */
+						MX7D_PAD_SD1_DATA2__SD1_DATA2	0x0a /* INTF1_14 */
+						MX7D_PAD_SD1_DATA3__SD1_DATA3	0x0a /* INTF1_15 */
+					>;
+				};
+
+				pinctrl_usdhc1_200mhz: usdhc1grp_200mhz {
+					fsl,pins = <
+						MX7D_PAD_SD1_CMD__SD1_CMD	0x0a /* INTF1_11 */
+						MX7D_PAD_SD1_CLK__SD1_CLK	0x0a /* INTF1_10 */
+						MX7D_PAD_SD1_DATA0__SD1_DATA0	0x0a /* INTF1_12 */
+						MX7D_PAD_SD1_DATA1__SD1_DATA1	0x0a /* INTF1_13 */
+						MX7D_PAD_SD1_DATA2__SD1_DATA2	0x0a /* INTF1_14 */
+						MX7D_PAD_SD1_DATA3__SD1_DATA3	0x0a /* INTF1_15 */
+					>;
+				};
+
+				pinctrl_usdhc1_power_off: usdhc1grp_power_off {
+					fsl,pins = <
+						MX7D_PAD_SD1_CMD__GPIO5_IO4	0x00 /* INTF1_11 */
+						MX7D_PAD_SD1_DATA0__GPIO5_IO5	0x00 /* INTF1_12 */
+						MX7D_PAD_SD1_DATA1__GPIO5_IO6	0x00 /* INTF1_13 */
+						MX7D_PAD_SD1_DATA2__GPIO5_IO7	0x00 /* INTF1_14 */
+						MX7D_PAD_SD1_DATA3__GPIO5_IO8	0x00 /* INTF1_15 */
+					>;
+				};
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&regulators>;
+		__overlay__ {
+			reg_sd1_vmmc_intf1: reg_sd1_vmmc_con7 {
+				compatible = "regulator-fixed";
+				regulator-name = "VDD_SD1";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+				gpio = <&gpio5 2 0>;
+				enable-active-high;
+				regulator-boot-on;
+			};
+		};
+	};
+
+	fragment@2 {
+		target = <&usdhc1>;
+		__overlay__ {
+			pinctrl-names = "default", "state_100mhz", "state_200mhz",
+					"state_power_off";
+			pinctrl-0 = <&pinctrl_usdhc1>;
+			pinctrl-1 = <&pinctrl_usdhc1_100mhz>;
+			pinctrl-2 = <&pinctrl_usdhc1_200mhz>;
+			pinctrl-3 = <&pinctrl_usdhc1_power_off>;
+			cd-gpios = <&gpio5 0 1>;
+			wp-gpios = <&gpio5 1 0>;
+			pinctrl-assert-gpios = <&gpio5 4 1>,	/* SD1_CMD */
+					       <&gpio5 5 1>,	/* SD1_DATA0 */
+					       <&gpio5 6 1>,	/* SD1_DATA1 */
+					       <&gpio5 7 1>,	/* SD1_DATA2 */
+					       <&gpio5 8 1>;	/* SD1_DATA3 */
+			tuning-step = <2>;
+			vmmc-supply = <&reg_sd1_vmmc_intf1>;
+			enable-sdio-wakeup;
+			keep-power-in-suspend;
+			max-frequency = <100000000>;
+			status = "okay";
+		};
+	};
+
+	fragment@3 {
+		target = <&regulators>;
+		__overlay__ {
+			reg_aom_usb_vbus_intf1: reg_aom_usb_vbus_con7 {
+				compatible = "regulator-fixed";
+				regulator-name = "USB_AOM_USB_VBUS";
+				regulator-min-microvolt = <5000000>;
+				regulator-max-microvolt = <5000000>;
+				gpio = <&gpio2 31 0>;
+				enable-active-high;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+		};
+	};
+};

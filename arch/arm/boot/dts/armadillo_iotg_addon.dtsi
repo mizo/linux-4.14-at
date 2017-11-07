@@ -1,0 +1,165 @@
+/*
+ * Copyright (C) 2015 Freescale Semiconductor, Inc.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+/ {
+	addon {
+		compatible = "armadillo_iotg_addon";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_addon>;
+
+		addon-i2c-bus = <&i2c1>;
+		power-gpio = <&gpio2 4 GPIO_ACTIVE_HIGH>;
+		power-ramp-delay = <3>; /* milliseconds */
+
+		intf1-gpios = <0>,		/* CON1_1:  D.G. */
+			     <0>,		/* CON1_2:  D.G. */
+			     <&gpio3  0 0>,	/* CON1_3:  LCD_CLK */
+			     <&gpio3  1 0>,	/* CON1_4:  LCD_ENABLE */
+			     <&gpio3  2 0>,	/* CON1_5:  LCD_HSYNC */
+			     <&gpio3  3 0>,	/* CON1_6:  LCD_VSYNC */
+			     <&gpio4  2 0>,	/* CON1_7:  UART2_RXD */
+			     <&gpio4  3 0>,	/* CON1_8:  UART2_TXD */
+			     <&gpio4  4 0>,	/* CON1_9:  UART3_RXD */
+			     <&gpio4  5 0>,	/* CON1_10: UART3_TXD */
+			     <&gpio4  6 0>,	/* CON1_11: UART3_RTS */
+			     <&gpio4  7 0>,	/* CON1_12: UART3_CTS */
+			     <&gpio4 10 0>,	/* CON1_13: I2C2_SCL */
+			     <&gpio4 11 0>,	/* CON1_14: I2C2_SDA */
+			     <&gpio5 11 0>,	/* CON1_15: SD2_RESET_B */
+			     <&gpio6 19 0>,	/* CON1_16: SAI2_TXFS */
+			     <&gpio6 20 0>,	/* CON1_17: SAI2_TXC */
+			     <&gpio6 22 0>,	/* CON1_18: SAI2_TXD */
+			     <&gpio6 21 0>,	/* CON1_19: SAI2_RXD */
+			     <0>,		/* CON1_20: I2C1_SCL */
+			     <0>,		/* CON1_21: I2C1_SDA */
+			     <&gpio4 12 0>,	/* CON1_22: I2C3_SCL */
+			     <&gpio4 13 0>,	/* CON1_23: I2C3_SDA */
+			     <&gpio3 25 0>,	/* CON1_24: LCD_DAT20 */
+			     <&gpio3 26 0>,	/* CON1_25: LCD_DAT21 */
+			     <0>,		/* CON1_26: D.G. */
+			     <0>,		/* CON1_27: D.G. */
+			     <0>,		/* CON1_28: VCC_3.3V_IO */
+			     <0>,		/* CON1_29: VCC_3.3V */
+			     <0>,		/* CON1_30: VCC_5V */
+			     <0>,		/* CON1_31: D.G. */
+			     <&gpio7 12 0>,	/* CON1_32: ENET1_TX_CLK */
+			     <&gpio7 13 0>,	/* CON1_33: ENET1_RX_CLK */
+			     <&gpio7  7 0>,	/* CON1_34: ENET1_TD1 */
+			     <&gpio7  2 0>,	/* CON1_35: ENET1_RD2 */
+			     <&gpio7  8 0>,	/* CON1_36: ENET1_TD2 */
+			     <&gpio7  3 0>,	/* CON1_37: ENET1_RD3 */
+			     <&gpio7  0 0>,	/* CON1_38: ENET1_RD0 */
+			     <&gpio7  1 0>,	/* CON1_39: ENET1_RD1 */
+			     <&gpio4  1 0>,	/* CON1_40: UART1_TXD */
+			     <&gpio4  0 0>,	/* CON1_41: UART1_RXD */
+			     <&gpio7  4 0>,	/* CON1_42: ENET1_RX_CTL */
+			     <&gpio7  5 0>,	/* CON1_43: ENET1_RXC */
+			     <&gpio7  6 0>,	/* CON1_44: ENET1_TD0 */
+			     <&gpio7 10 0>,	/* CON1_45: ENET1_TX_CTL */
+			     <&gpio7 11 0>,	/* CON1_46: ENET1_TXC */
+			     <&gpio5 12 0>,	/* CON1_47: SD2_CLK */
+			     <&gpio5 13 0>,	/* CON1_48: SD2_CMD */
+			     <&gpio5 14 0>,	/* CON1_49: SD2_DATA0 */
+			     <&gpio7  9 0>,	/* CON1_50: ENET1_TD3 */
+			     <&gpio5 15 0>,	/* CON1_51: SD2_DATA1 */
+			     <&gpio5 16 0>,	/* CON1_52: SD2_DATA2 */
+			     <&gpio5 17 0>,	/* CON1_53: SD2_DATA3 */
+			     <0>,		/* CON1_54: D.G. */
+			     <0>,		/* CON1_55: BOARD_ONOFF */
+			     <0>,		/* CON1_56: CON1_USB_VBUS */
+			     <0>,		/* CON1_57: CON1_USB_VBUS */
+			     <0>,		/* CON1_58: D.G. */
+			     <0>,		/* CON1_59: USB_OTG2_DP */
+			     <0>;		/* CON1_60: USB_OTG2_DN */
+
+		intf2-gpios = <0>,		/* CON2_1:  D.G. */
+			     <0>,		/* CON2_2:  D.G. */
+			     <0>,		/* CON2_3:  N.C. */
+			     <0>,		/* CON2_4:  N.C. */
+			     <0>,		/* CON2_5:  N.C. */
+			     <0>,		/* CON2_6:  N.C. */
+			     <0>,		/* CON2_7:  N.C. */
+			     <0>,		/* CON2_8:  N.C. */
+			     <0>,		/* CON2_9:  N.C. */
+			     <0>,		/* CON2_10: N.C. */
+			     <0>,		/* CON2_11: N.C. */
+			     <0>,		/* CON2_12: N.C. */
+			     <0>,		/* CON2_13: N.C. */
+			     <0>,		/* CON2_14: N.C. */
+			     <0>,		/* CON2_15: N.C. */
+			     <0>,		/* CON2_16: N.C. */
+			     <0>,		/* CON2_17: N.C. */
+			     <0>,		/* CON2_18: N.C. */
+			     <0>,		/* CON2_19: N.C. */
+			     <0>,		/* CON2_20: I2C1_SCL */
+			     <0>,		/* CON2_21: I2C1_SDA */
+			     <0>,		/* CON2_22: N.C. */
+			     <0>,		/* CON2_23: N.C. */
+			     <&gpio4 10 0>,	/* CON2_24: I2C2_SCL */
+			     <&gpio4 11 0>,	/* CON2_25: I2C2_SDA*/
+			     <0>,		/* CON2_26: D.G. */
+			     <0>,		/* CON2_27: D.G. */
+			     <0>,		/* CON2_28: VCC_3.3V_IO */
+			     <0>,		/* CON2_29: VCC_3.3V */
+			     <0>,		/* CON2_30: VCC_5V */
+			     <0>,		/* CON2_31: VCC_3.3V_IO */
+			     <&gpio4  2 0>,	/* CON2_32: UART2_RXD */
+			     <&gpio5 11 0>,	/* CON2_33: SD2_RESET_B */
+			     <&gpio4  3 0>,	/* CON2_34: UART2_TXD */
+			     <&gpio4  6 0>,	/* CON2_35: UART3_RTS */
+			     <&gpio4  4 0>,	/* CON2_36: UART3_RXD */
+			     <&gpio4  5 0>,	/* CON2_37: UART3_TXD */
+			     <&gpio3  3 0>,	/* CON2_38: LCD_VSYNC */
+			     <&gpio3  2 0>,	/* CON2_39: LCD_HSYNC */
+			     <&gpio3  1 0>,	/* CON2_40: LCD_ENABLE */
+			     <&gpio3  0 0>,	/* CON2_41: LCD_CLK */
+			     <&gpio4 12 0>,	/* CON2_42: I2C3_SCL */
+			     <&gpio4 13 0>,	/* CON2_43: I2C3_SDA */
+			     <&gpio7  6 0>,	/* CON2_44: N.C. */
+			     <&gpio7 10 0>,	/* CON2_45: N.C. */
+			     <&gpio6 19 0>,	/* CON2_46: SAI2_TXFS */
+			     <&gpio6 20 0>,	/* CON2_47: SAI2_TXC */
+			     <&gpio6 21 0>,	/* CON2_48: SAI2_RXD */
+			     <&gpio6 22 0>,	/* CON2_49: SAI2_TXD */
+			     <&gpio4  7 0>,	/* CON2_50: UART3_CTS */
+			     <0>,		/* CON2_51: N.C. */
+			     <0>,		/* CON2_52: N.C. */
+			     <0>,		/* CON2_53: N.C. */
+			     <0>,		/* CON2_54: D.G. */
+			     <0>,		/* CON2_55: AOM2_PMIC_ONOFF */
+			     <0>,		/* CON2_56: CON2_USB_VBUS */
+			     <0>,		/* CON2_57: CON2_USB_VBUS */
+			     <0>,		/* CON2_58: D.G. */
+			     <0>,		/* CON2_59: USB_ADDON_CON2_DP */
+			     <0>;		/* CON2_60: USB_ADDON_CON2_DM */
+	};
+};
+
+&i2c1 {
+	clock-frequency = <100000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_i2c1>;
+	status = "okay";
+};
+
+&iomuxc {
+	imx7d-sdb {
+		pinctrl_i2c1: i2c1grp {
+			fsl,pins = <
+				MX7D_PAD_I2C1_SDA__I2C1_SDA	0x4000007f
+				MX7D_PAD_I2C1_SCL__I2C1_SCL	0x4000007f
+			>;
+		};
+
+		pinctrl_addon: addongrp {
+			fsl,pins = <
+				MX7D_PAD_EPDC_DATA04__GPIO2_IO4	0x00 /* GPIO_AOM_PWREN */
+			>;
+		};
+	};
+};
