@@ -62,6 +62,9 @@ void __init imx6_enet_mac_init(const char *enet_compat, const char *ocotp_compat
 		if (!of_device_is_available(enet_np))
 			continue;
 
+		if (of_property_read_bool(enet_np, "no-mac-init"))
+			continue;
+
 		if (of_get_mac_address(enet_np))
 			goto put_enet_node;
 
