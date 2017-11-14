@@ -561,6 +561,12 @@ static void imx6_pcie_init_phy(struct imx6_pcie *imx6_pcie)
 				   IMX6SX_GPR12_PCIE_RX_EQ_2);
 
 	if (imx6_pcie->variant == IMX7D) {
+		/* power on before ref clock are taken */
+		if (gpio_is_valid(imx6_pcie->power_on_gpio)) {
+			gpio_set_value(imx6_pcie->power_on_gpio, 1);
+			mdelay(1);
+		}
+
 		/* Enable PCIe PHY 1P0D */
 		regulator_set_voltage(imx6_pcie->pcie_phy_regulator,
 				1000000, 1000000);
