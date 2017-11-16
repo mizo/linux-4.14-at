@@ -218,6 +218,23 @@
 	status = "okay";
 };
 
+&pcie_phy{
+	status = "okay";
+};
+
+&pcie {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pcie>;
+
+	reset-gpio = <&gpio6 12 GPIO_ACTIVE_LOW>;
+	disable-gpio = <&gpio6 13 GPIO_ACTIVE_LOW>;
+	disable-gpio-open-drain;
+	power-on-gpio = <&gpio7 14 GPIO_ACTIVE_HIGH>;
+	clkreq-gpio = <&gpio6 17 GPIO_ACTIVE_HIGH>;
+	wake-gpio = <&gpio6 14 GPIO_ACTIVE_HIGH>;
+	status = "okay";
+};
+
 &uart5 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_lpsr_uart5>;
@@ -301,6 +318,18 @@
 			fsl,pins = <
 				MX7D_PAD_GPIO1_IO11__I2C4_SDA	0x4000007f
 				MX7D_PAD_GPIO1_IO10__I2C4_SCL	0x4000007f
+			>;
+		};
+
+		pinctrl_pcie: pciegrp {
+			fsl,pins = <
+				MX7D_PAD_SAI1_RX_DATA__GPIO6_IO12	0x00 /* PCI_WLAN_RESET# */
+				MX7D_PAD_SAI1_TX_BCLK__GPIO6_IO13	0x00 /* PCI_WLAN_DISABLE# */
+				MX7D_PAD_ENET1_CRS__GPIO7_IO14		0x00 /* GPIO_PCIE_PWREN */
+				MX7D_PAD_SAI1_RX_BCLK__GPIO6_IO17	0x00 /* GPIO_PCI_CLKREQ# */
+				MX7D_PAD_SAI1_RX_SYNC__GPIO6_IO16	0x10 /* GPIO_PCI_COEX2 */
+				MX7D_PAD_SAI1_TX_DATA__GPIO6_IO15	0x10 /* GPIO_PCI_COEX1 */
+				MX7D_PAD_SAI1_TX_SYNC__GPIO6_IO14	0x00 /* GPIO_PCI_WAKE# */
 			>;
 		};
 
