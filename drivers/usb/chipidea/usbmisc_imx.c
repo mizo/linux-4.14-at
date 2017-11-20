@@ -89,6 +89,7 @@
 #define VF610_OVER_CUR_DIS		BIT(7)
 
 #define MX7D_USBNC_USB_CTRL2		0x4
+#define MX7D_USBNC_USB_CTRL2_DIG_ID_SEL			BIT(20)
 #define MX7D_USBNC_USB_CTRL2_OPMODE_OVERRIDE_EN		BIT(8)
 #define MX7D_USBNC_USB_CTRL2_OPMODE_OVERRIDE_MASK	(BIT(7) | BIT(6))
 #define MX7D_USBNC_USB_CTRL2_OPMODE(v)			(v << 6)
@@ -516,6 +517,7 @@ static int usbmisc_imx7d_set_wakeup
 static int usbmisc_imx7d_init(struct imx_usbmisc_data *data)
 {
 	struct imx_usbmisc *usbmisc = dev_get_drvdata(data->dev);
+	struct device_node *np = data->dev->of_node;
 	unsigned long flags;
 	u32 reg;
 
@@ -537,6 +539,8 @@ static int usbmisc_imx7d_init(struct imx_usbmisc_data *data)
 	writel(reg | MX6_BM_NON_BURST_SETTING, usbmisc->base);
 
 	reg = readl(usbmisc->base + MX7D_USBNC_USB_CTRL2);
+	if (of_property_read_bool(np, "use-muxed-id"))
+		reg |= MX7D_USBNC_USB_CTRL2_DIG_ID_SEL;
 	reg &= ~MX7D_USB_VBUS_WAKEUP_SOURCE_MASK;
 	writel(reg | MX7D_USB_VBUS_WAKEUP_SOURCE_BVALID,
 		 usbmisc->base + MX7D_USBNC_USB_CTRL2);
