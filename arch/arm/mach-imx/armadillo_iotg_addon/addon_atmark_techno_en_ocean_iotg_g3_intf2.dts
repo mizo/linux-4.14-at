@@ -33,9 +33,6 @@
 		__overlay__ {
 			pinctrl-names = "default";
 			pinctrl-0 = <&pinctrl_uart2>;
-			assigned-clocks = <&clks IMX7D_UART2_ROOT_SRC>, <&clks IMX7D_UART2_ROOT_DIV>;
-			assigned-clock-parents = <&clks IMX7D_PLL_SYS_MAIN_240M_CLK>;
-			assigned-clock-rates = <0>, <80000000>;
 			status = "okay";
 		};
 	};
