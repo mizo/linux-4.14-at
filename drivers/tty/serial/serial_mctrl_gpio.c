@@ -134,7 +134,6 @@ struct mctrl_gpios *mctrl_gpio_init_noauto(struct device *dev, unsigned int idx)
 			devm_gpiod_get_index_optional(dev,
 						      mctrl_gpios_desc[i].name,
 						      idx, flags);
-
 		if (IS_ERR(gpios->gpio[i]))
 			return ERR_CAST(gpios->gpio[i]);
 	}

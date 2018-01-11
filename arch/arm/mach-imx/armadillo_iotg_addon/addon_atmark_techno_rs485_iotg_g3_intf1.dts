@@ -37,8 +37,7 @@
 
 			rs485-rts-active-high;
 			rs485-enabled-at-boot-time;
-			fsl,rs485-tx-gate-type = "gpio";
-			fsl,rs485-tx-gate-gpio = <&gpio7 12 0>;
+			rts-gpio = <&gpio7 12 0>;
 			fsl,rs485-rx-gate-type = "gpio";
 			fsl,rs485-rx-gate-gpio = <&gpio7 13 0>;
 			fsl,rs485-rx-gate-active-low;
