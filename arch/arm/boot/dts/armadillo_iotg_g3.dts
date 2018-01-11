@@ -47,7 +47,7 @@
 
 / {
 	model = "Atmark-Techno Armadillo-IoT Gateway G3 Board";
-	compatible = "fsl,imx7d-sdb", "fsl,imx7d";
+	compatible = "at,armadillo-iotg-g3", "fsl,imx7d";
 
 	memory {
 		reg = <0x80000000 0x20000000>;
@@ -282,7 +282,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_hog>;
 
-	imx7d-sdb {
+	armadillo-iotg-g3 {
 		pinctrl_hog: hoggrp {
 			fsl,pins = <
 				/* USDHC1 */
@@ -422,7 +422,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_hog_2>;
 
-	imx7d-sdb {
+	armadillo-iotg-g3 {
 		pinctrl_hog_2: hoggrp-2 {
 			fsl,pins = <
 				MX7D_PAD_GPIO1_IO00__WDOD1_WDOG_B	0x74
