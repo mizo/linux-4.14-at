@@ -40,6 +40,8 @@
 #include <linux/of_device.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
+#include <linux/gpio.h>
+#include <linux/of_gpio.h>
 
 #include <asm/irq.h>
 #include <linux/platform_data/serial-imx.h>
@@ -252,6 +254,10 @@ struct imx_port {
 	bool			context_saved;
 #define DMA_TX_IS_WORKING 1
 	unsigned long		flags;
+
+	/* RS485 fields */
+	unsigned int rs485_duplex_gpio;
+	bool rs485_duplex_active_low;
 };
 
 struct imx_port_ucrs {
@@ -1025,6 +1031,14 @@ static void imx_timeout(unsigned long data)
 	}
 }
 
+static void imx_rs485_set_duplex(struct imx_port *sport, int duplex)
+{
+	if (gpio_is_valid(sport->rs485_duplex_gpio)) {
+		gpio_direction_output(sport->rs485_duplex_gpio,
+				      sport->rs485_duplex_active_low ^ !!duplex);
+	}
+}
+
 /*
  * There are three kinds of RX DMA interrupts(such as in the MX6Q):
  *   [1] the RX DMA buffer is full.
@@ -1758,6 +1772,10 @@ static int imx_rs485_config(struct uart_port *port,
 		rs485conf->flags &= ~SER_RS485_ENABLED;
 
 	if (rs485conf->flags & SER_RS485_ENABLED) {
+		/* set direction */
+		imx_rs485_set_duplex(sport, rs485conf->flags &
+				     SER_RS485_RX_DURING_TX);
+
 		/* disable transmitter */
 		temp = readl(sport->port.membase + UCR2);
 		if (rs485conf->flags & SER_RS485_RTS_AFTER_SEND)
@@ -2076,6 +2094,19 @@ static int serial_imx_probe_dt(struct imx_port *sport,
 
 	if (of_get_property(np, "fsl,dte-mode", NULL))
 		sport->dte_mode = 1;
+
+	sport->rs485_duplex_gpio = of_get_named_gpio(np, "fsl,rs485-duplex-gpio", 0);
+	if (gpio_is_valid(sport->rs485_duplex_gpio)) {
+		ret = devm_gpio_request(&pdev->dev, sport->rs485_duplex_gpio,
+					"rs485 duplex");
+		if (!ret) {
+			if (of_property_read_bool(np, "fsl,rs485-duplex-active-low"))
+				sport->rs485_duplex_active_low = true;
+		} else {
+			dev_err(&pdev->dev, "failed to request duplex gpio.\n");
+			return ret;
+		}
+	}
 
 	return 0;
 }
