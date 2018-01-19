@@ -873,13 +873,13 @@ out:
  */
 static unsigned int imx_get_hwmctrl(struct imx_port *sport)
 {
-	unsigned int tmp = TIOCM_DSR | TIOCM_CAR;
+	unsigned int tmp = TIOCM_DSR;
 	unsigned int usr1 = readl(sport->port.membase + USR1);
 	unsigned int usr2 = readl(sport->port.membase + USR2);
 	unsigned int ucr2 = readl(sport->port.membase + UCR2);
 
 	if (sport->port.rs485.flags & SER_RS485_ENABLED)
-		tmp |= TIOCM_CTS;
+		tmp |= TIOCM_CTS | TIOCM_CAR;
 
 	if (usr1 & USR1_RTSS)
 		tmp |= TIOCM_CTS;
@@ -1016,12 +1016,12 @@ static void imx_set_mctrl(struct uart_port *port, unsigned int mctrl)
 		if (mctrl & TIOCM_RTS)
 			temp |= UCR2_CTS | UCR2_CTSC;
 		writel(temp, sport->port.membase + UCR2);
-	}
 
-	temp = readl(sport->port.membase + UCR3) & ~UCR3_DSR;
-	if (!(mctrl & TIOCM_DTR))
-		temp |= UCR3_DSR;
-	writel(temp, sport->port.membase + UCR3);
+		temp = readl(sport->port.membase + UCR3) & ~UCR3_DSR;
+		if (!(mctrl & TIOCM_DTR))
+			temp |= UCR3_DSR;
+		writel(temp, sport->port.membase + UCR3);
+	}
 
 	temp = readl(sport->port.membase + uts_reg(sport)) & ~UTS_LOOP;
 	if (mctrl & TIOCM_LOOP)
