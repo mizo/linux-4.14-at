@@ -841,6 +841,9 @@ static unsigned int imx_get_hwmctrl(struct imx_port *sport)
 	unsigned int usr2 = readl(sport->port.membase + USR2);
 	unsigned int ucr2 = readl(sport->port.membase + UCR2);
 
+	if (sport->port.rs485.flags & SER_RS485_ENABLED)
+		tmp |= TIOCM_CTS;
+
 	if (usr1 & USR1_RTSS)
 		tmp |= TIOCM_CTS;
 
@@ -1599,8 +1602,6 @@ imx_set_termios(struct uart_port *port, struct ktermios *termios,
 
 	if (termios->c_cflag & CRTSCTS) {
 		if (sport->have_rtscts) {
-			ucr2 &= ~UCR2_IRTS;
-
 			if (port->rs485.flags & SER_RS485_ENABLED) {
 				/*
 				 * RTS is mandatory for rs485 operation, so keep
@@ -1613,6 +1614,7 @@ imx_set_termios(struct uart_port *port, struct ktermios *termios,
 				else
 					imx_port_rts_active(sport, &ucr2);
 			} else {
+				ucr2 &= ~UCR2_IRTS;
 				imx_port_rts_auto(sport, &ucr2);
 			}
 		} else {
