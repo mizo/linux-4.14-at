@@ -742,9 +742,11 @@ static irqreturn_t imx_rtsint(int irq, void *dev_id)
 	spin_lock_irqsave(&sport->port.lock, flags);
 
 	writel(USR1_RTSD, sport->port.membase + USR1);
-	val = readl(sport->port.membase + USR1) & USR1_RTSS;
-	uart_handle_cts_change(&sport->port, !!val);
-	wake_up_interruptible(&sport->port.state->port.delta_msr_wait);
+	if (!(sport->port.rs485.flags & SER_RS485_ENABLED)) {
+		val = readl(sport->port.membase + USR1) & USR1_RTSS;
+		uart_handle_cts_change(&sport->port, !!val);
+		wake_up_interruptible(&sport->port.state->port.delta_msr_wait);
+	}
 
 	spin_unlock_irqrestore(&sport->port.lock, flags);
 	return IRQ_HANDLED;
