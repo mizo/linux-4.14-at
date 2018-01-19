@@ -1868,6 +1868,8 @@ static int imx_rs485_config(struct uart_port *port,
 	struct imx_port *sport = (struct imx_port *)port;
 	unsigned long temp;
 
+	port->rs485 = *rs485conf;
+
 	/* RTS is required to control the transmitter */
 	if (!sport->have_rtscts)
 		rs485conf->flags &= ~SER_RS485_ENABLED;
@@ -1893,8 +1895,6 @@ static int imx_rs485_config(struct uart_port *port,
 		temp |= UCR2_RXEN;
 		writel(temp, sport->port.membase + UCR2);
 	}
-
-	port->rs485 = *rs485conf;
 
 	return 0;
 }
