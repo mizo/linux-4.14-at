@@ -192,6 +192,25 @@
 #define IMX_RXBD_NUM 20
 #define IMX_MODULE_MAX_CLK_RATE	80000000
 
+enum {
+	RS485_FLAGS = 0,
+	RS485_DELAY_RTS_BEFORE_SEND,
+	RS485_DELAY_RTS_AFTER_SEND,
+	RS485_PARAM_NR,
+};
+static unsigned int rs485_uart1[RS485_PARAM_NR];
+static unsigned int rs485_uart2[RS485_PARAM_NR];
+static unsigned int rs485_uart3[RS485_PARAM_NR];
+static unsigned int rs485_uart4[RS485_PARAM_NR];
+static unsigned int rs485_uart5[RS485_PARAM_NR];
+static unsigned int rs485_uart6[RS485_PARAM_NR];
+static unsigned int rs485_uart7[RS485_PARAM_NR];
+static unsigned int rs485_uart8[RS485_PARAM_NR];
+static unsigned int (*rs485_uarts[UART_NR])[RS485_PARAM_NR] = {
+	&rs485_uart1, &rs485_uart2, &rs485_uart3, &rs485_uart4,
+	&rs485_uart5, &rs485_uart6, &rs485_uart7, &rs485_uart8,
+};
+
 /* i.MX21 type uart runs on all i.mx except i.MX1 and i.MX6q */
 enum imx_uart_type {
 	IMX1_UART,
@@ -2348,6 +2367,19 @@ static int serial_imx_probe(struct platform_device *pdev)
 		     HRTIMER_MODE_REL);
 	sport->rs485_after_send.function = imx_rs485_after_send;
 
+	if ((*rs485_uarts[sport->port.line])[RS485_FLAGS] & SER_RS485_ENABLED) {
+		sport->port.rs485.flags =
+			(*rs485_uarts[sport->port.line])[RS485_FLAGS];
+		sport->port.rs485.delay_rts_before_send =
+			(*rs485_uarts[sport->port.line])
+			[RS485_DELAY_RTS_BEFORE_SEND];
+		sport->port.rs485.delay_rts_after_send =
+			(*rs485_uarts[sport->port.line])
+			[RS485_DELAY_RTS_AFTER_SEND];
+
+		imx_rs485_config(&sport->port, &sport->port.rs485);
+	}
+
 	platform_set_drvdata(pdev, sport);
 
 	return uart_add_one_port(&imx_reg, &sport->port);
@@ -2530,6 +2562,15 @@ static void __exit imx_serial_exit(void)
 
 module_init(imx_serial_init);
 module_exit(imx_serial_exit);
+
+module_param_array(rs485_uart1, uint, NULL, S_IRUGO);
+module_param_array(rs485_uart2, uint, NULL, S_IRUGO);
+module_param_array(rs485_uart3, uint, NULL, S_IRUGO);
+module_param_array(rs485_uart4, uint, NULL, S_IRUGO);
+module_param_array(rs485_uart5, uint, NULL, S_IRUGO);
+module_param_array(rs485_uart6, uint, NULL, S_IRUGO);
+module_param_array(rs485_uart7, uint, NULL, S_IRUGO);
+module_param_array(rs485_uart8, uint, NULL, S_IRUGO);
 
 MODULE_AUTHOR("Sascha Hauer");
 MODULE_DESCRIPTION("IMX generic serial port driver");
