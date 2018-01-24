@@ -248,9 +248,10 @@ static void imx_set_panic_temp(struct imx_thermal_data *data,
 	int critical_value;
 
 	if (data->socdata->version == TEMPMON_IMX7)
-		critical_value = (panic_temp - 25 * 1000) / 870 + data->c1;
+		critical_value = DIV_ROUND_UP(panic_temp - 25 * 1000, 870) +
+						data->c1;
 	else
-		critical_value = (data->c2 - panic_temp) / data->c1;
+		critical_value = DIV_ROUND_UP(data->c2 - panic_temp, data->c1);
 
 	regmap_write(map, soc_data->panic_alarm_ctrl + REG_CLR,
 		     soc_data->panic_alarm_mask);
@@ -268,9 +269,10 @@ static void imx_set_alarm_temp(struct imx_thermal_data *data,
 	data->alarm_temp = alarm_temp;
 
 	if (data->socdata->version == TEMPMON_IMX7)
-		alarm_value = (alarm_temp - 25 * 1000) / 870 + data->c1;
+		alarm_value = DIV_ROUND_UP(alarm_temp - 25 * 1000, 870) +
+						data->c1;
 	else
-		alarm_value = (data->c2 - alarm_temp) / data->c1;
+		alarm_value = DIV_ROUND_UP(data->c2 - alarm_temp, data->c1);
 
 	regmap_write(map, soc_data->high_alarm_ctrl + REG_CLR,
 		     soc_data->high_alarm_mask);
