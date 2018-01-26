@@ -35,12 +35,8 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&pinctrl_uart7>;
 
-			rs485-rts-active-high;
 			rs485-enabled-at-boot-time;
 			rts-gpio = <&gpio6 18 0>;
-			fsl,rs485-rx-gate-type = "gpio";
-			fsl,rs485-rx-gate-gpio = <&gpio4 2 0>;
-			fsl,rs485-rx-gate-active-low;
 			status = "okay";
 		};
 	};

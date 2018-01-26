@@ -38,9 +38,6 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&pinctrl_uart7>;
 
-			rs485-rts-active-high;
-			fsl,rs485-rx-gate-type = "gpio";
-			fsl,rs485-rx-gate-gpio = <&gpio6 17 0>;
 			fsl,rs485-duplex-type = "gpio";
 			fsl,rs485-duplex-gpio = <&gpio6 18 0>;
 			fsl,uart-has-rtscts;

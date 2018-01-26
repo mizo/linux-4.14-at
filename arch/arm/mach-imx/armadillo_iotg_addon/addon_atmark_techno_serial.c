@@ -37,6 +37,7 @@ extern_dtb(addon_atmark_techno_serial_x1_intf1);
 extern_dtb(addon_atmark_techno_serial_x1_intf1_rs485);
 
 #define PIN_XR3160_MODE	(42)
+#define PIN_ADUM1402_VE1	(43)
 
 #define XR3160_MODE_RS232C	(0)
 #define XR3160_MODE_RS485	(1)
@@ -47,6 +48,7 @@ int addon_setup_atmark_techno_serial(struct addon_device *adev)
 	void *begin;
 	size_t size;
 	int gpio_xr3160_mode;
+	int gpio_adum1402_ve1;
 	char label[64];
 	int mode;
 
@@ -81,6 +83,7 @@ int addon_setup_atmark_techno_serial(struct addon_device *adev)
 	armadillo_iotg_addon_dt_overlay(addon->dev, begin, size);
 
 	gpio_xr3160_mode = adev->gpios[PIN_XR3160_MODE - 1];
+	gpio_adum1402_ve1 = adev->gpios[PIN_ADUM1402_VE1 - 1];
 
 	if (!gpio_is_valid(gpio_xr3160_mode)) {
 		dev_warn(addon->dev, "gpio_xr3160_mode is invalid\n");
@@ -91,7 +94,17 @@ int addon_setup_atmark_techno_serial(struct addon_device *adev)
 		return -EINVAL;
 	}
 
+	if (!gpio_is_valid(gpio_adum1402_ve1)) {
+		dev_warn(addon->dev, "gpio_adum1402_ve1 is invalid\n");
+		return -EINVAL;
+	}
+	if (devm_gpio_request(addon->dev, gpio_adum1402_ve1, NULL)) {
+		dev_warn(addon->dev, "gpio_adum1402_ve1 request failed\n");
+		return -EINVAL;
+	}
+
 	gpio_direction_input(gpio_xr3160_mode);
+	gpio_direction_output(gpio_adum1402_ve1, 1);
 
 	gpio_export(gpio_xr3160_mode, false);
 
