@@ -1471,7 +1471,7 @@ struct ieee802_11_elems {
 	const struct ieee80211_timeout_interval_ie *timeout_int;
 	const u8 *opmode_notif;
 	const struct ieee80211_sec_chan_offs_ie *sec_chan_offs;
-	const struct ieee80211_mesh_chansw_params_ie *mesh_chansw_params_ie;
+	struct ieee80211_mesh_chansw_params_ie *mesh_chansw_params_ie;
 
 	/* length of them, respectively */
 	u8 ext_capab_len;
