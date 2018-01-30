@@ -620,6 +620,14 @@ static void dma_tx_callback(void *data)
 
 	if (!uart_circ_empty(xmit) && !uart_tx_stopped(&sport->port))
 		schedule_work(&sport->tsk_dma_tx);
+	else if (sport->port.rs485.flags & SER_RS485_ENABLED) {
+		unsigned long temp;
+
+		/* enable transmitter and shifter empty irq */
+		temp = readl(sport->port.membase + UCR4);
+		temp |= UCR4_TCEN;
+		writel(temp, sport->port.membase + UCR4);
+	}
 
 	if (waitqueue_active(&sport->dma_wait)) {
 		wake_up(&sport->dma_wait);
