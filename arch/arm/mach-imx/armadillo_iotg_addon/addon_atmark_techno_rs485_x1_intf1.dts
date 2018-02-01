@@ -36,6 +36,7 @@
 			pinctrl-0 = <&pinctrl_uart7>;
 
 			rs485-enabled-at-boot-time;
+			rs485-rts-active-high;
 			rts-gpio = <&gpio6 18 0>;
 			status = "okay";
 		};

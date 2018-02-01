@@ -16,6 +16,7 @@
 		target = <&uart7>;
 		__overlay__ {
 			rs485-enabled-at-boot-time;
+			rs485-rts-active-high;
 		};
 	};
 };
