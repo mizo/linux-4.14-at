@@ -324,6 +324,7 @@ static u32 esdhc_readl_le(struct sdhci_host *host, int reg)
 {
 	struct sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
 	struct pltfm_imx_data *imx_data = sdhci_pltfm_priv(pltfm_host);
+	struct esdhc_platform_data *boarddata = &imx_data->boarddata;
 	u32 val = readl(host->ioaddr + reg);
 
 	if (unlikely(reg == SDHCI_PRESENT_STATE)) {
@@ -367,6 +368,9 @@ static u32 esdhc_readl_le(struct sdhci_host *host, int reg)
 
 			if (imx_data->socdata->flags & ESDHC_FLAG_HS400)
 				val |= SDHCI_SUPPORT_HS400;
+
+			if (boarddata->unsupport_ddr50)
+				val &= ~SDHCI_SUPPORT_DDR50;
 		}
 	}
 
@@ -1175,6 +1179,9 @@ sdhci_esdhc_imx_probe_dt(struct platform_device *pdev,
 	of_property_read_u32(np, "fsl,tuning-step", &boarddata->tuning_step);
 	of_property_read_u32(np, "fsl,tuning-start-tap",
 			     &boarddata->tuning_start_tap);
+
+	if (of_find_property(np, "fsl,no-ddr50-support", NULL))
+		boarddata->unsupport_ddr50 = true;
 
 	if (of_find_property(np, "no-1-8-v", NULL))
 		boarddata->support_vsel = false;
