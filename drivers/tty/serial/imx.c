@@ -1562,7 +1562,7 @@ static void imx_shutdown(struct uart_port *port)
 		hrtimer_cancel(&sport->rs485_before_send);
 
 		temp = readl(port->membase + UCR2);
-		if (port->rs485.flags & SER_RS485_RTS_ON_SEND)
+		if (port->rs485.flags & SER_RS485_RTS_AFTER_SEND)
 			imx_port_rts_inactive(sport, &temp);
 		else
 			imx_port_rts_active(sport, &temp);
