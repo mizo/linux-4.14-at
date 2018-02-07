@@ -120,6 +120,12 @@
 	pinctrl-0 = <&pinctrl_i2c4>;
 	status = "okay";
 
+	rtc: bmic_rtc@11 {
+		compatible = "at,bmic_rtc";
+		reg = <0x11>;
+		irq-gpio = <&gpio1 13 GPIO_ACTIVE_HIGH>;
+	};
+
 	gpio_bmic: bmic_gpio@14 {
 		compatible = "at,bmic_gpio";
 		reg = <0x14>;
@@ -295,6 +301,9 @@
 			fsl,pins = <
 				/* USDHC1 */
 				MX7D_PAD_GPIO1_IO08__SD1_VSELECT	0x59 /* VSELECT */
+
+				/* MCU */
+				MX7D_PAD_GPIO1_IO13__GPIO1_IO13		0x40000000 /* MCU_INTB */
 			>;
 		};
 
