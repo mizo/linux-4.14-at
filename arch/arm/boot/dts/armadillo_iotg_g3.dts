@@ -126,6 +126,13 @@
 		irq-gpio = <&gpio1 13 GPIO_ACTIVE_HIGH>;
 	};
 
+	adc: bmic_adc@12 {
+		compatible = "at,bmic_adc";
+		reg = <0x12>;
+		vref-supply = <&reg_bmic>;
+		irq-gpio = <&gpio1 13 GPIO_ACTIVE_HIGH>;
+	};
+
 	gpio_bmic: bmic_gpio@14 {
 		compatible = "at,bmic_gpio";
 		reg = <0x14>;
