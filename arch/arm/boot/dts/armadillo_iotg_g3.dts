@@ -133,6 +133,16 @@
 		#gpio-cells = <2>;
 	};
 
+	reg_bmic: bmic_regulator@16 {
+		compatible = "at,bmic_regulator";
+		reg = <0x16>;
+		regulator-name = "BMIC_VREF";
+		regulator-min-microvolt = <1710000>;
+		regulator-max-microvolt = <3600000>;
+		regulator-boot-on;
+		regulator-always-on;
+	};
+
 	pmic: pfuze3000@09 {
 		compatible = "fsl,pfuze3000";
 		reg = <0x09>;
