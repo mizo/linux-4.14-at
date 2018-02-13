@@ -387,7 +387,7 @@ static void imx_port_rts_active(struct imx_port *sport, unsigned long *ucr2)
 	*ucr2 &= ~UCR2_CTSC;
 	*ucr2 |= UCR2_CTS;
 
-	sport->port.mctrl |= TIOCM_RTS;
+	sport->port.mctrl &= ~TIOCM_RTS;
 	mctrl_gpio_set(sport->gpios, sport->port.mctrl);
 }
 
@@ -395,7 +395,7 @@ static void imx_port_rts_inactive(struct imx_port *sport, unsigned long *ucr2)
 {
 	*ucr2 &= ~(UCR2_CTSC | UCR2_CTS);
 
-	sport->port.mctrl &= ~TIOCM_RTS;
+	sport->port.mctrl |= TIOCM_RTS;
 	mctrl_gpio_set(sport->gpios, sport->port.mctrl);
 }
 
