@@ -172,6 +172,13 @@ config BERLIN2_ADC
 	  Marvell Berlin2 ADC driver. This ADC has 8 channels, with one used for
 	  temperature measurement.
 
+config BMIC_ADC
+	tristate "Atmark Techno BMIC ADC"
+	depends on I2C
+	select IIO_TRIGGERED_BUFFER
+	help
+	  Say yes here to build support for Atmark Techno BMIC ADC.
+
 config CC10001_ADC
 	tristate "Cosmic Circuits 10001 ADC driver"
 	depends on HAS_IOMEM && HAVE_CLK && REGULATOR
