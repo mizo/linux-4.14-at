@@ -287,6 +287,12 @@ config ARMADA_THERMAL
 	  Enable this option if you want to have support for thermal management
 	  controller present in Armada 370 and Armada XP SoC.
 
+config BMIC_THERMAL
+	tristate "Atmark Techno BMIC thermal"
+	depends on OF
+	help
+	  Say yes here to build support for Atmark Techno BMIC thermal.
+
 config DB8500_CPUFREQ_COOLING
 	tristate "DB8500 cpufreq cooling"
 	depends on ARCH_U8500 || COMPILE_TEST
