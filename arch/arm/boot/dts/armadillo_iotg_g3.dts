@@ -519,6 +519,15 @@
 	};
 };
 
+&gpio1 {
+	mcu_intb {
+		gpio-hog;
+		gpios = <13 GPIO_ACTIVE_HIGH>;
+		input;
+		line-name = "MCU_INTB";
+	};
+};
+
 &gpio2 {
 	lan1_int_n {
 		gpio-hog;
