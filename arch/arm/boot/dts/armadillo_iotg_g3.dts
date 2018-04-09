@@ -519,6 +519,10 @@
 	};
 };
 
+&wdog1 {
+	timeout-sec = <10>;
+};
+
 &gpio1 {
 	mcu_intb {
 		gpio-hog;
