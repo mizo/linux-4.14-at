@@ -311,7 +311,12 @@ static int __init imx2_wdt_probe(struct platform_device *pdev)
 	watchdog_set_drvdata(wdog, wdev);
 	watchdog_set_nowayout(wdog, nowayout);
 	watchdog_set_restart_priority(wdog, 128);
-	watchdog_init_timeout(wdog, timeout, &pdev->dev);
+	/*
+	 * This overrides the default timeout only if DT configuration
+	 * was found
+	 */
+	wdog->timeout = timeout;
+	watchdog_init_timeout(wdog, 0, &pdev->dev);
 
 	if (imx2_wdt_is_running(wdev)) {
 		imx2_wdt_set_timeout(wdog, wdog->timeout);
