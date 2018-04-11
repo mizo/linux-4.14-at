@@ -77,6 +77,22 @@
 			enable-active-high;
 			regulator-boot-on;
 		};
+
+		pds6_power: pds6-power {
+			compatible = "regulator-fixed";
+			regulator-name = "3G_POWER_EN";
+			regulator-min-microvolt = <3800000>;
+			regulator-max-microvolt = <3800000>;
+			gpio = <&gpio_bmic 1 GPIO_ACTIVE_LOW>;
+			startup-delay-us = <10000>;
+			off-on-delay-us = <1000000>;
+		};
+	};
+
+	pds6_cold_reset: pds6-cold-reset {
+		compatible = "cold-reset";
+		power-supply = <&pds6_power>;
+		high-fixed-gpios = <&gpio3 21 GPIO_ACTIVE_HIGH>;
 	};
 
 	usdhc3_pwrseq: pwrseq@0 {
@@ -154,6 +170,20 @@
 		regulator-max-microvolt = <3600000>;
 		regulator-boot-on;
 		regulator-always-on;
+	};
+
+	usb_hub: usb3503@08 {
+		compatible = "smsc,usb3503";
+		reg = <0x08>;
+
+		clocks = <&clks IMX7D_CLKO2_ROOT_PRE_DIV>;
+		clock-names = "refclk";
+
+		refclk-frequency = <24000000>;
+		intn-gpios = <&gpio2 14 GPIO_ACTIVE_HIGH>;
+		connect-gpios = <&gpio2 15 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpio2 13 GPIO_ACTIVE_HIGH>;
+		initial-mode = <1>;	/* MODE_HUB */
 	};
 
 	pmic: pfuze3000@09 {
@@ -255,6 +285,10 @@
 	status = "okay";
 };
 
+&usbh {
+	status = "okay";
+};
+
 &pcie_phy{
 	status = "okay";
 };
@@ -324,6 +358,16 @@
 			fsl,pins = <
 				/* USDHC1 */
 				MX7D_PAD_GPIO1_IO08__SD1_VSELECT	0x59 /* VSELECT */
+
+				/* PDS6-J */
+				MX7D_PAD_ECSPI1_MOSI__GPIO4_IO17	0x00 /* GPIO_3G_IGT_3.3 */
+				MX7D_PAD_ECSPI1_MISO__GPIO4_IO18	0x00 /* GPIO_3G_EMERG_OFF_3.3 */
+				MX7D_PAD_LCD_DATA16__GPIO3_IO21		0x00 /* GPIO_3G_VUSB_IN */
+
+				/* USB3503 */
+				MX7D_PAD_EPDC_DATA13__GPIO2_IO13	0x00 /* GPIO_USB_HUB_RESET_N */
+				MX7D_PAD_EPDC_DATA14__GPIO2_IO14	0x04 /* GPIO_USB_HUB_INT_N */
+				MX7D_PAD_EPDC_DATA15__GPIO2_IO15	0x00 /* GPIO_USB_HUB_CON */
 
 				/* MCU */
 				MX7D_PAD_GPIO1_IO13__GPIO1_IO13		0x40000000 /* MCU_INTB */
@@ -444,15 +488,15 @@
 			>;
 		};
 
-		pinctrl_usbotg1: usbotg1grp {
-			fsl,pins = <
-				MX7D_PAD_I2C4_SDA__GPIO4_IO15 0x00
-			>;
-		};
-
 		pinctrl_usdhc3_pwrseq: pwrseq-usdhc3grp {
 			fsl,pins = <
 				MX7D_PAD_SD3_RESET_B__GPIO6_IO11	0x4000000a
+			>;
+		};
+
+		pinctrl_usbotg1: usbotg1grp {
+			fsl,pins = <
+				MX7D_PAD_I2C4_SDA__GPIO4_IO15 0x00
 			>;
 		};
 
@@ -533,6 +577,13 @@
 };
 
 &gpio2 {
+	sven {
+		gpio-hog;
+		gpios = <11 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "SVEN";
+	};
+
 	lan1_int_n {
 		gpio-hog;
 		gpios = <28 GPIO_ACTIVE_HIGH>;
@@ -545,5 +596,14 @@
 		gpios = <30 GPIO_ACTIVE_HIGH>;
 		output-low;
 		line-name = "LAN1_COMA_MODE";
+	};
+};
+
+&gpio4 {
+	3g_igt {
+		gpio-hog;
+		gpios = <17 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "3G_IGT_3.3";
 	};
 };
