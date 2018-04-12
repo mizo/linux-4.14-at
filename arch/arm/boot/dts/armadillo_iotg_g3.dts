@@ -101,6 +101,11 @@
 		pinctrl-0 = <&pinctrl_usdhc3_pwrseq>;
 		reset-gpios = <&gpio6 11 GPIO_ACTIVE_LOW>;
 	};
+
+	poweroff {
+		compatible = "gpio-poweroff";
+		gpios = <&gpio_bmic 2 GPIO_ACTIVE_LOW>;
+	};
 };
 
 &cpu0 {
