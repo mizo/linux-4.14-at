@@ -95,6 +95,55 @@
 		high-fixed-gpios = <&gpio3 21 GPIO_ACTIVE_HIGH>;
 	};
 
+	gpio-keys {
+		compatible = "gpio-keys";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_gpio_keys &pinctrl_lpsr_gpio_keys>;
+
+		sw1 {
+			label = "SW1";
+			gpios = <&gpio1 2 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_1>;
+		};
+		sw2 {
+			label = "SW2";
+			gpios = <&gpio3 22 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_2>;
+		};
+		sw3 {
+			label = "SW3";
+			gpios = <&gpio3 23 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_3>;
+		};
+	};
+
+	gpio-leds {
+		compatible = "gpio-leds";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_gpio_leds>;
+
+		LED3 {
+			label = "led1";
+			gpios = <&gpio3 11 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "default-on";
+		};
+		LED2 {
+			label = "led2";
+			gpios = <&gpio3 10 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "default-on";
+		};
+		LED4 {
+			label = "led3";
+			gpios = <&gpio3 12 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+		};
+		LED5 {
+			label = "led4";
+			gpios = <&gpio3 13 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "none";
+		};
+	};
+
 	usdhc3_pwrseq: pwrseq@0 {
 		compatible = "mmc-pwrseq-emmc";
 		pinctrl-names = "default";
@@ -515,6 +564,22 @@
 				MX7D_PAD_EPDC_DATA06__QSPI_A_SS0_B	0x51
 			>;
 		};
+
+		pinctrl_gpio_keys: gpio_keysgrp {
+			fsl,pins = <
+				MX7D_PAD_LCD_DATA17__GPIO3_IO22	0x00 /* SW2 */
+				MX7D_PAD_LCD_DATA18__GPIO3_IO23	0x00 /* SW3 */
+			>;
+		};
+
+		pinctrl_gpio_leds: gpio_ledsgrp {
+			fsl,pins = <
+				MX7D_PAD_LCD_DATA05__GPIO3_IO10	0x00
+				MX7D_PAD_LCD_DATA06__GPIO3_IO11	0x00
+				MX7D_PAD_LCD_DATA07__GPIO3_IO12	0x00
+				MX7D_PAD_LCD_DATA08__GPIO3_IO13	0x00
+			>;
+		};
 	};
 };
 
@@ -536,6 +601,12 @@
 				MX7D_PAD_GPIO1_IO06__UART5_DCE_RX	0x79
 				MX7D_PAD_GPIO1_IO05__UART5_DCE_RTS	0x79
 				MX7D_PAD_GPIO1_IO04__UART5_DCE_CTS	0x00
+			>;
+		};
+
+		pinctrl_lpsr_gpio_keys: lpsr_gpio_keysgrp {
+			fsl,pins = <
+				MX7D_PAD_GPIO1_IO02__GPIO1_IO2	0x00 /* SW1 */
 			>;
 		};
 	};
