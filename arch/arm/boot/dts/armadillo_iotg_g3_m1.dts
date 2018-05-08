@@ -445,17 +445,6 @@
 			>;
 		};
 
-		pinctrl_qspi1: qspi1grp {
-			fsl,pins = <
-				MX7D_PAD_EPDC_DATA00__QSPI_A_DATA0	0x51
-				MX7D_PAD_EPDC_DATA01__QSPI_A_DATA1	0x51
-				MX7D_PAD_EPDC_DATA02__QSPI_A_DATA2	0x51
-				MX7D_PAD_EPDC_DATA03__QSPI_A_DATA3	0x51
-				MX7D_PAD_EPDC_DATA05__QSPI_A_SCLK	0x51
-				MX7D_PAD_EPDC_DATA06__QSPI_A_SS0_B	0x51
-			>;
-		};
-
 		pinctrl_gpio_keys: gpio_keysgrp {
 			fsl,pins = <
 				MX7D_PAD_LCD_DATA17__GPIO3_IO22	0x00 /* SW2 */
@@ -619,33 +608,6 @@
 	non-removable;
 	mmc-pwrseq = <&usdhc3_pwrseq>;
 	status = "okay";
-};
-
-&qspi1 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_qspi1>;
-	status = "okay";
-	ddrsmp=<0>;
-
-	flash0: n25q064@0 {
-		#address-cells = <1>;
-		#size-cells = <1>;
-		compatible = "n25q064";
-		spi-max-frequency = <29000000>;
-
-		partition@0 {
-			label = "bootloader";
-			reg = <0x00000000 0x00100000>;
-		};
-		partition@1 {
-			label = "license";
-			reg = <0x00100000 0x00040000>;
-		};
-		partition@2 {
-			label = "reserved";
-			reg = <0x00140000 0x006c0000>;
-		};
-	};
 };
 
 &wdog1 {
