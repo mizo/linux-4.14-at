@@ -633,6 +633,7 @@
 
 &wdog1 {
 	timeout-sec = <10>;
+	fsl,ext-reset-output;
 };
 
 &gpio1 {
