@@ -1,0 +1,104 @@
+/*
+ * Copyright (C) 2018 Atmark Techno, Inc. All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+/ {
+	addon {
+		compatible = "armadillo_x1_addon";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_addon>;
+
+		addon-i2c-bus = <&i2c3>;
+		power-gpio = <&gpio2 4 GPIO_ACTIVE_HIGH>;
+		power-ramp-delay = <3>; /* milliseconds */
+
+		intf1-gpios = <0>,		/* CON7_1:  D.G. */
+			     <0>,		/* CON7_2:  D.G. */
+			     <0>,		/* CON7_3:  VCC_3.3V */
+			     <0>,		/* CON7_4:  VCC_3.3V */
+			     <0>,		/* CON7_5:  BOOT_MODE0 */
+			     <0>,		/* CON7_6:  NVCC_SD1 */
+			     <&gpio5  0 0>,	/* CON7_7:  SD1_CD_B */
+			     <&gpio5  1 0>,	/* CON7_8:  SD1_WP */
+			     <&gpio5  2 0>,	/* CON7_9:  SD1_RESET_B */
+			     <&gpio5  3 0>,	/* CON7_10: SD1_CLK */
+			     <&gpio5  4 0>,	/* CON7_11: SD1_CMD */
+			     <&gpio5  5 0>,	/* CON7_12: SD1_DATA0 */
+			     <&gpio5  6 0>,	/* CON7_13: SD1_DATA1 */
+			     <&gpio5  7 0>,	/* CON7_14: SD1_DATA2 */
+			     <&gpio5  8 0>,	/* CON7_15: SD1_DATA3 */
+			     <&gpio4 16 0>,	/* CON7_16: ECSPI1_SCLK */
+			     <&gpio4 17 0>,	/* CON7_17: ECSPI1_MOSI */
+			     <&gpio4 18 0>,	/* CON7_18: ECSPI1_MISO */
+			     <0>,		/* CON7_19: N.C. */
+			     <0>,		/* CON7_20: I2C3_SCL */
+			     <0>,		/* CON7_21: I2C3_SDA */
+			     <0>,		/* CON7_22: N.C. */
+			     <0>,		/* CON7_23: N.C. */
+			     <&gpio4  0 0>,	/* CON7_24: UART1_RX_DATA */
+			     <&gpio4  1 0>,	/* CON7_25: UART1_TX_DATA */
+			     <0>,		/* CON7_26: D.G. */
+			     <0>,		/* CON7_27: D.G. */
+			     <0>,		/* CON7_28: VCC_3.3V_IO */
+			     <0>,		/* CON7_29: VCC_3.3V */
+			     <0>,		/* CON7_30: VCC_5V */
+			     <0>,		/* CON7_31: D.G. */
+			     <&gpio6 18 0>,	/* CON7_32: SAI1_MCLK */
+			     <&gpio4  2 0>,	/* CON7_33: UART2_RX_DATA */
+			     <&gpio4  3 0>,	/* CON7_34: UART2_TX_DATA */
+			     <&gpio4  6 0>,	/* CON7_35: UART3_RTS_B */
+			     <&gpio4  4 0>,	/* CON7_36: UART3_RX_DATA */
+			     <&gpio4  5 0>,	/* CON7_37: UART3_TX_DATA */
+			     <&gpio4 23 0>,	/* CON7_38: ECSPI2_SS0 */
+			     <&gpio4 22 0>,	/* CON7_39: ECSPI2_MISO */
+			     <&gpio4 21 0>,	/* CON7_40: ECSPI2_MOSI */
+			     <&gpio4 20 0>,	/* CON7_41: ECSPI2_SCLK */
+			     <&gpio6 16 0>,	/* CON7_42: SAI1_RX_SYNC */
+			     <&gpio6 17 0>,	/* CON7_43: SAI1_RX_BCLK */
+			     <0>,		/* CON7_44: N.C. */
+			     <0>,		/* CON7_45: N.C. */
+			     <&gpio6 19 0>,	/* CON7_46: SAI2_TX_SYNC */
+			     <&gpio6 20 0>,	/* CON7_47: SAI2_TX_BCLK */
+			     <&gpio6 21 0>,	/* CON7_48: SAI2_RX_DATA */
+			     <&gpio6 22 0>,	/* CON7_49: SAI2_TX_DATA */
+			     <&gpio4  7 0>,	/* CON7_50: UART3_CTS_B */
+			     <&gpio5 15 0>,	/* CON7_51: N.C. */
+			     <0>,		/* CON7_52: N.C. */
+			     <0>,		/* CON7_53: N.C. */
+			     <0>,		/* CON7_54: D.G. */
+			     <0>,		/* CON7_55: BOARD_ONOFF */
+			     <0>,		/* CON7_56: USB_VBUS */
+			     <0>,		/* CON7_57: USB_VBUS */
+			     <0>,		/* CON7_58: D.G. */
+			     <0>,		/* CON7_59: USBHUB2_DM */
+			     <0>;		/* CON7_60: USBHUB2_DP */
+	};
+};
+
+&i2c3 {
+	clock-frequency = <100000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_i2c3>;
+	status = "okay";
+};
+
+&iomuxc {
+	imx7d-sdb {
+		pinctrl_i2c3: i2c3grp {
+			fsl,pins = <
+				MX7D_PAD_I2C3_SDA__I2C3_SDA	0x4000007f
+				MX7D_PAD_I2C3_SCL__I2C3_SCL	0x4000007f
+			>;
+		};
+
+		pinctrl_addon: addongrp {
+			fsl,pins = <
+				MX7D_PAD_EPDC_DATA04__GPIO2_IO4	0x00 /* GPIO_AOM_PWREN */
+			>;
+		};
+	};
+};

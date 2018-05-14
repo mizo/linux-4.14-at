@@ -577,7 +577,8 @@ dtb-$(CONFIG_SOC_IMX7D) += \
 	imx7d-sdb-reva-touch.dtb \
 	imx7d-sdb-reva-wm8960.dtb \
 	armadillo_iotg_g3.dtb \
-	armadillo_iotg_g3_m1.dtb
+	armadillo_iotg_g3_m1.dtb \
+	armadillo_x1.dtb
 dtb-$(CONFIG_SOC_IMX7ULP) += \
 	imx7ulp-14x14-arm2.dtb \
 	imx7ulp-evk.dtb \
