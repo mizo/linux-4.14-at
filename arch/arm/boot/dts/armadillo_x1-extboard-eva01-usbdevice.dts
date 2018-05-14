@@ -1,0 +1,15 @@
+/*
+ * Copyright (C) 2018 Atmark Techno, Inc. All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+#include "armadillo_x1.dts"
+
+#include "armadillo_x1-extboard-eva01-fec1.dtsi"
+#include "armadillo_x1-extboard-eva01-usdhc2.dtsi"
+#include "armadillo_x1-extboard-eva01-pca9538.dtsi"
+#include "armadillo_x1-extboard-eva01-lcdif.dtsi"
+#include "armadillo_x1-extboard-eva01-usbotg2-device.dtsi"

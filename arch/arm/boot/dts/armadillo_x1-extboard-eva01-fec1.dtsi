@@ -1,0 +1,82 @@
+/*
+ * Copyright (C) 2018 Atmark Techno, Inc. All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+&iomuxc {
+	x1_extboard_eva01 {
+		pinctrl_enet1: enet1grp {
+			fsl,pins = <
+				MX7D_PAD_ENET1_RGMII_RD0__ENET1_RGMII_RD0	0x01
+				MX7D_PAD_ENET1_RGMII_RD1__ENET1_RGMII_RD1	0x01
+				MX7D_PAD_ENET1_RGMII_RD2__ENET1_RGMII_RD2	0x01
+				MX7D_PAD_ENET1_RGMII_RD3__ENET1_RGMII_RD3	0x01
+				MX7D_PAD_ENET1_RGMII_RX_CTL__ENET1_RGMII_RX_CTL	0x01
+				MX7D_PAD_ENET1_RGMII_RXC__ENET1_RGMII_RXC	0x01
+
+				MX7D_PAD_ENET1_RGMII_TD0__ENET1_RGMII_TD0	0x01
+				MX7D_PAD_ENET1_RGMII_TD1__ENET1_RGMII_TD1	0x01
+				MX7D_PAD_ENET1_RGMII_TD2__ENET1_RGMII_TD2	0x01
+				MX7D_PAD_ENET1_RGMII_TD3__ENET1_RGMII_TD3	0x01
+				MX7D_PAD_ENET1_RGMII_TX_CTL__ENET1_RGMII_TX_CTL	0x01
+				MX7D_PAD_ENET1_RGMII_TXC__ENET1_RGMII_TXC	0x01
+
+				MX7D_PAD_ENET1_TX_CLK__GPIO7_IO12	0x00
+				MX7D_PAD_ENET1_RX_CLK__GPIO7_IO13	0x00
+				MX7D_PAD_ENET1_CRS__GPIO7_IO14		0x00
+
+				MX7D_PAD_SD2_WP__ENET1_MDC		0x00
+				MX7D_PAD_SD2_CD_B__ENET1_MDIO		0x00
+			>;
+		};
+	};
+};
+
+&fec1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_enet1>;
+	assigned-clocks = <&clks IMX7D_ENET1_TIME_ROOT_SRC>,
+			  <&clks IMX7D_ENET1_TIME_ROOT_CLK>;
+	assigned-clock-parents = <&clks IMX7D_PLL_ENET_MAIN_100M_CLK>;
+	assigned-clock-rates = <0>, <100000000>;
+	phy-mode = "rgmii";
+	phy-handle = <&ethphy1>;
+	fsl,magic-packet;
+	fsl,mii-exclusive;
+	status = "okay";
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		ethphy1: ethernet-phy@0 {
+			reg = <0>;
+		};
+	};
+};
+
+&gpio7 {
+	vsc8501_mdint {
+		gpio-hog;
+		gpios = <12 GPIO_ACTIVE_HIGH>;
+		input;
+		line-name = "VSC8501_MDINT";
+	};
+
+	vsc8501_nreset {
+		gpio-hog;
+		gpios = <13 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "VSC8501_NRESET";
+	};
+
+	vsc8501_coma_mode {
+		gpio-hog;
+		gpios = <14 GPIO_ACTIVE_HIGH>;
+		output-low;
+		line-name = "VSC8501_COMA_MODE";
+	};
+};

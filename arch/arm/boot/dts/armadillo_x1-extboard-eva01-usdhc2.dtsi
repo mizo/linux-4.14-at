@@ -1,0 +1,69 @@
+/*
+ * Copyright (C) 2018 Atmark Techno, Inc. All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+/ {
+	x1_extboard_eva01_regulators {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		reg_sd2_vmmc: regulator_sd2_vmmc {
+			compatible = "regulator-fixed";
+			regulator-name = "VDD_SD2";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			gpio = <&gpio5 11 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
+			regulator-boot-on;
+		};
+	};
+};
+
+&iomuxc {
+	x1_extboard_eva01 {
+		pinctrl_usdhc2: usdhc2grp {
+			fsl,pins = <
+				MX7D_PAD_SD2_CMD__SD2_CMD	0x0a
+				MX7D_PAD_SD2_CLK__SD2_CLK	0x0a
+				MX7D_PAD_SD2_DATA0__SD2_DATA0	0x0a
+				MX7D_PAD_SD2_DATA1__SD2_DATA1	0x0a
+				MX7D_PAD_SD2_DATA2__SD2_DATA2	0x0a
+				MX7D_PAD_SD2_DATA3__SD2_DATA3	0x0a
+				MX7D_PAD_SD2_RESET_B__GPIO5_IO11	0x00
+			>;
+		};
+
+		pinctrl_usdhc2_power_off: usdhc2grp_power_off {
+			fsl,pins = <
+				MX7D_PAD_SD2_CMD__GPIO5_IO13	0x00
+				MX7D_PAD_SD2_DATA0__GPIO5_IO14	0x00
+				MX7D_PAD_SD2_DATA1__GPIO5_IO15	0x00
+				MX7D_PAD_SD2_DATA2__GPIO5_IO16	0x00
+				MX7D_PAD_SD2_DATA3__GPIO5_IO17	0x00
+			>;
+		};
+	};
+};
+
+&usdhc2 {
+	pinctrl-names = "default", "state_power_off";
+	pinctrl-0 = <&pinctrl_usdhc2>;
+	pinctrl-1 = <&pinctrl_usdhc2_power_off>;
+	pinctrl-assert-gpios = <&gpio5 13 GPIO_ACTIVE_LOW>,	/* SD2_CMD */
+			       <&gpio5 14 GPIO_ACTIVE_LOW>,	/* SD2_DATA0 */
+			       <&gpio5 15 GPIO_ACTIVE_LOW>,	/* SD2_DATA1 */
+			       <&gpio5 16 GPIO_ACTIVE_LOW>,	/* SD2_DATA2 */
+			       <&gpio5 17 GPIO_ACTIVE_LOW>;	/* SD2_DATA3 */
+	tuning-step = <2>;
+	vmmc-supply = <&reg_sd2_vmmc>;
+	vqmmc-supply = <&vgen6_reg>;
+	enable-sdio-wakeup;
+	keep-power-in-suspend;
+	no-1-8-v;
+	status = "okay";
+};
