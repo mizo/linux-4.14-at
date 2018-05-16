@@ -1121,6 +1121,8 @@ endif
 
 ifeq ($(CONFIG_OF_RESOLVE),y)
 DTC_FLAGS_armadillo_iotg_g3 := -@
+DTC_FLAGS_armadillo_iotg_g3_m1 := -@
+DTC_FLAGS_armadillo_x1 := -@
 endif
 
 dtstree		:= $(srctree)/$(src)
