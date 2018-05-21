@@ -1,0 +1,79 @@
+/*
+ * Copyright (C) 2018 Atmark Techno, Inc. All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+/ {
+	extboard {
+		compatible = "armadillo_x1l_extboard";
+
+		/* i2c4 already configured by armadillo_x1l */
+		extboard-i2c-bus = <&i2c4>;
+
+		gpios = <0>,		/* CON7_1:  D.G. */
+			<0>,		/* CON7_2:  D.G. */
+			<0>,		/* CON7_3:  PD20 */
+			<0>,		/* CON7_4:  BOARD_ONOFF */
+			<&gpio4  2 0>,	/* CON7_5:  UART2_RX_DATA */
+			<&gpio4  3 0>,	/* CON7_6:  UART2_TX_DATA */
+			<&gpio4  4 0>,	/* CON7_7:  UART3_RX_DATA */
+			<&gpio4  5 0>,	/* CON7_8:  UART3_TX_DATA */
+			<&gpio4  6 0>,	/* CON7_9:  UART3_RTS_B */
+			<&gpio4  7 0>,	/* CON7_10: UART3_CTS_B */
+			<&gpio4  8 0>,	/* CON7_11: I2C1_SCL */
+			<&gpio4  9 0>,	/* CON7_12: I2C1_SDA */
+			<&gpio4 12 0>,	/* CON7_13: I2C3_SCL */
+			<&gpio4 13 0>,	/* CON7_14: I2C3_SDA */
+			<&gpio3 10 0>,	/* CON7_15: LCD_DATA05 */
+			<&gpio3 11 0>,	/* CON7_16: LCD_DATA06 */
+			<&gpio3 12 0>,	/* CON7_17: LCD_DATA07 */
+			<&gpio5 12 0>,	/* CON7_18: SD2_CLK */
+			<&gpio5 13 0>,	/* CON7_19: SD2_CMD */
+			<&gpio5 14 0>,	/* CON7_20: SD2_DATA0 */
+			<&gpio5 15 0>,	/* CON7_21: SD2_DATA1 */
+			<&gpio5 16 0>,	/* CON7_22: SD2_DATA2 */
+			<&gpio5 17 0>,	/* CON7_23: SD2_DATA3 */
+			<0>,		/* CON7_24: I2C4_SCL */
+			<0>,		/* CON7_25: I2C4_SDA */
+			<0>,		/* CON7_26: D.G. */
+			<0>,		/* CON7_27: D.G. */
+			<0>,		/* CON7_28: VCC_3.3V */
+			<0>,		/* CON7_29: VCC_3.3V */
+			<0>,		/* CON7_30: VCC_3.3V */
+			<0>,		/* CON7_31: VCC_5V */
+			<0>,		/* CON7_32: VCC_5V */
+			<0>,		/* CON7_33: VCC_5V */
+			<0>,		/* CON7_34: D.G. */
+			<0>,		/* CON7_35: D.G. */
+			<&gpio6 22 0>,	/* CON7_36: SAI2_TX_DATA */
+			<&gpio6 21 0>,	/* CON7_37: SAI2_RX_DATA */
+			<&gpio6 20 0>,	/* CON7_38: SAI2_TX_BCLK */
+			<&gpio6 19 0>,	/* CON7_39: SAI2_TX_SYNC */
+			<&gpio4 23 0>,	/* CON7_40: ECSPI2_SS0 */
+			<&gpio4 22 0>,	/* CON7_41: ECSPI2_MISO */
+			<&gpio4 21 0>,	/* CON7_42: ECSPI2_MOSI */
+			<&gpio4 20 0>,	/* CON7_43: ECSPI2_SCLK */
+			<&gpio4 19 0>,	/* CON7_44: ECSPI1_SS0 */
+			<&gpio4 18 0>,	/* CON7_45: ECSPI1_MISO */
+			<&gpio4 17 0>,	/* CON7_46: ECSPI1_MOSI */
+			<&gpio4 16 0>,	/* CON7_47: ECSPI1_SCLK */
+			<&gpio3 28 0>,	/* CON7_48: LCD_DATA23 */
+			<&gpio3 27 0>,	/* CON7_49: LCD_DATA22 */
+			<&gpio1  1 0>,	/* CON7_50: GPIO1_IO01 */
+			<0>,		/* CON7_51: PD12 */
+			<&gpio2  4 0>,	/* CON7_52: EPDC_DATA04 */
+			<&gpio3  6 0>,	/* CON7_53: LCD_DATA01 */
+			<&gpio3 21 0>,	/* CON7_54: LCD_DATA16 */
+			<0>,		/* CON7_55: USB_OTG2_DP */
+			<0>,		/* CON7_56: USB_OTG2_DN */
+			<0>,		/* CON7_57: VCC_5V */
+			<0>,		/* CON7_58: VCC_5V */
+			<0>,		/* CON7_59: D.G. */
+			<0>;		/* CON7_60: D.G. */
+	};
+
+	extboard_devices: extboard-devices {};
+};

@@ -1,0 +1,2 @@
+#include "armadillo_x1l.dts"
+#include "armadillo_x1l_extboard.dtsi"
