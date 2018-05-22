@@ -762,7 +762,7 @@ static int imx_pinctrl_inject_function(struct device_node *np,
 	radix_tree_insert(&info->ftree, info->nfunctions, func);
 	mutex_unlock(&info->mutex);
 
-	info->ngroups++;
+	info->ngroups += of_get_child_count(np);
 
 	return imx_pinctrl_parse_functions(np, info, info->nfunctions++);
 }
