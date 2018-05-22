@@ -1,0 +1,88 @@
+/*
+ * DTS overlay for converting ti,tilcdc,slave binding to new binding.
+ *
+ * Copyright (C) 2018 Atmark Techno, Inc. All Rights Reserved.
+ * Author: Daisuke Mizobuchi <mizo@atmark-techno.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * version 2 as published by the Free Software Foundation.
+ */
+#include <dt-bindings/clock/imx7d-clock.h>
+#include <dt-bindings/gpio/gpio.h>
+#include "../../../../arch/arm/boot/dts/imx7d-pinfunc.h"
+
+/dts-v1/;
+/plugin/;
+/ {
+	fragment@0 {
+		target = <&iomuxc>;
+		__overlay__ {
+			extboard-base {
+				pinctrl_uart3: uart3grp {
+					fsl,pins = <
+						MX7D_PAD_UART3_RX_DATA__UART3_DCE_RX 	0x70	/* CON7_7 */
+						MX7D_PAD_UART3_TX_DATA__UART3_DCE_TX	0x00	/* CON7_8 */
+						MX7D_PAD_UART3_CTS_B__UART3_DCE_CTS	0x00	/* CON7_9 */
+						MX7D_PAD_UART3_RTS_B__UART3_DCE_RTS	0x10	/* CON7_10 */
+					>;
+				};
+
+				pinctrl_gpio_leds: gpio_ledsgrp {
+					fsl,pins = <
+						MX7D_PAD_LCD_DATA05__GPIO3_IO10	0x00
+						MX7D_PAD_LCD_DATA06__GPIO3_IO11	0x00
+						MX7D_PAD_LCD_DATA07__GPIO3_IO12	0x00
+					>;
+				};
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&uart3>;
+		__overlay__ {
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_uart3>;
+			assigned-clocks = <&clks IMX7D_UART3_ROOT_SRC>;
+			assigned-clock-parents = <&clks IMX7D_OSC_24M_CLK>;
+			fsl,uart-has-rtscts;
+			status = "okay";
+		};
+	};
+
+	fragment@2 {
+		target = <&extboard_devices>;
+		__overlay__ {
+			gpio-leds {
+				compatible = "gpio-leds";
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_gpio_leds>;
+
+				LED3 {
+					label = "led3";
+					gpios = <&gpio3 10 GPIO_ACTIVE_HIGH>;
+					linux,default-trigger = "none";
+				};
+				LED4 {
+					label = "led4";
+					gpios = <&gpio3 11 GPIO_ACTIVE_HIGH>;
+					linux,default-trigger = "default-on";
+				};
+				LED5 {
+					label = "led5";
+					gpios = <&gpio3 12 GPIO_ACTIVE_HIGH>;
+					linux,default-trigger = "none";
+				};
+			};
+		};
+	};
+
+	fragment@3 {
+		target = <&usbotg2>;
+		__overlay__ {
+			dr_mode = "host";
+			status = "okay";
+		};
+	};
+};
