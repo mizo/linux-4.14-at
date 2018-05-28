@@ -52,7 +52,7 @@
 	};
 
 	fragment@2 {
-		target = <&extboard_devices>;
+		target-path = "/";
 		__overlay__ {
 			gpio-leds {
 				compatible = "gpio-leds";

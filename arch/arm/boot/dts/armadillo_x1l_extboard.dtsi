@@ -74,6 +74,4 @@
 			<0>,		/* CON7_59: D.G. */
 			<0>;		/* CON7_60: D.G. */
 	};
-
-	extboard_devices: extboard-devices {};
 };

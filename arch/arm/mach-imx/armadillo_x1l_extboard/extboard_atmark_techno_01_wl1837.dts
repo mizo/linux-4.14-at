@@ -109,7 +109,7 @@
 	};
 
 	fragment@3 {
-		target = <&extboard_devices>;
+		target-path = "/";
 		__overlay__ {
 			kim {
 				compatible = "kim";
@@ -120,19 +120,14 @@
 				flow_cntrl = <1>;
 				baud_rate = <3000000>;
 			};
-		};
-	};
 
-	fragment@4 {
-		target = <&extboard_devices>;
-		__overlay__ {
 			btwilink {
 				compatible = "btwilink";
 			};
 		};
 	};
 
-	fragment@5 {
+	fragment@4 {
 		target = <&usdhc2>;
 		__overlay__ {
 			pinctrl-names = "default", "state_100mhz", "state_200mhz";

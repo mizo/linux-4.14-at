@@ -70,7 +70,7 @@
 	};
 
 	fragment@2 {
-		target = <&extboard_devices>;
+		target-path = "/";
 		__overlay__ {
 			els31_reset: els31-reset {
 				compatible = "gpio-reset";
@@ -81,35 +81,13 @@
 				reset-delay-us = <1000>;
 				#reset-cells = <0>;
 			};
-		};
-	};
 
-	fragment@3 {
-		target = <&extboard_devices>;
-		__overlay__ {
 			els31_cold_reset: els31-cold-reset {
 				compatible = "cold-reset";
 				resets = <&els31_reset>;
 				power-supply = <&els31_power>;
 			};
-		};
-	};
 
-	fragment@4 {
-		target = <&uart7>;
-		__overlay__ {
-			pinctrl-names = "default";
-			pinctrl-0 = <&pinctrl_uart7>;
-			assigned-clocks = <&clks IMX7D_UART7_ROOT_SRC>;
-			assigned-clock-parents = <&clks IMX7D_OSC_24M_CLK>;
-			fsl,uart-has-rtscts;
-			status = "okay";
-		};
-	};
-
-	fragment@5 {
-		target = <&extboard_devices>;
-		__overlay__ {
 			gpio-wakeup {
 				compatible = "gpio-keys";
 				pinctrl-names = "default";
@@ -122,6 +100,18 @@
 					linux,code = <KEY_WAKEUP>;
 				};
 			};
+		};
+	};
+
+	fragment@3 {
+		target = <&uart7>;
+		__overlay__ {
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_uart7>;
+			assigned-clocks = <&clks IMX7D_UART7_ROOT_SRC>;
+			assigned-clock-parents = <&clks IMX7D_OSC_24M_CLK>;
+			fsl,uart-has-rtscts;
+			status = "okay";
 		};
 	};
 };
