@@ -205,6 +205,45 @@ static void imx_gpcv2_irq_mask(struct irq_data *d)
 	irq_chip_mask_parent(d);
 }
 
+static int imx_gpcv2_irq_set_wake_gic(struct irq_data *d, unsigned int on)
+{
+	unsigned int idx = d->hwirq / 32  - 1;
+	unsigned long flags;
+	u32 mask;
+
+	/* Sanity check for SPI irq */
+	if (d->hwirq < 32)
+		return -EINVAL;
+
+	BUG_ON(idx >= IMR_NUM);
+
+	mask = 1 << d->hwirq % 32;
+	spin_lock_irqsave(&gpcv2_lock, flags);
+	gpcv2_wake_irqs[idx] = on ? gpcv2_wake_irqs[idx] | mask :
+				  gpcv2_wake_irqs[idx] & ~mask;
+	spin_unlock_irqrestore(&gpcv2_lock, flags);
+
+	return 0;
+}
+
+static void imx_gpcv2_irq_unmask_gic(struct irq_data *d)
+{
+	/* Sanity check for SPI irq */
+	if (d->hwirq < 32)
+		return;
+
+	imx_gpcv2_hwirq_unmask(d->hwirq - 32);
+}
+
+static void imx_gpcv2_irq_mask_gic(struct irq_data *d)
+{
+	/* Sanity check for SPI irq */
+	if (d->hwirq < 32)
+		return;
+
+	imx_gpcv2_hwirq_unmask(d->hwirq - 32);
+}
+
 void imx_gpcv2_set_slot_ack(u32 index, enum imx_gpc_slot m_core,
 				bool mode, bool ack)
 {
@@ -949,6 +988,11 @@ static int __init imx_gpcv2_init(struct device_node *node,
 
 	/* disable RBC */
 	imx_gpcv2_enable_rbc(false);
+
+	/* Register GPC as the secondary interrupt controller behind GIC */
+	gic_arch_extn.irq_mask = imx_gpcv2_irq_mask_gic;
+	gic_arch_extn.irq_unmask = imx_gpcv2_irq_unmask_gic;
+	gic_arch_extn.irq_set_wake = imx_gpcv2_irq_set_wake_gic;
 
 	return 0;
 }
