@@ -100,7 +100,7 @@
 			};
 		};
 
-		busfreq {
+		busfreq: busfreq {
 			compatible = "fsl,imx_busfreq";
 			fsl,max_ddr_freq = <533000000>;
 			clocks = <&clks IMX7D_OSC_24M_CLK>, <&clks IMX7D_MAIN_AXI_ROOT_SRC>,
@@ -113,6 +113,7 @@
 					"pll_dram", "dram_alt_root", "pfd2_270m", "pfd1_332m", "ahb", "axi";
 			interrupts = <0 112 0x04>, <0 113 0x04>;
 			interrupt-names = "irq_busfreq_0", "irq_busfreq_1";
+			status = "disabled";
 		};
 
 		caam_sm: caam-sm@00100000 {
