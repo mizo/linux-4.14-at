@@ -1,0 +1,377 @@
+/*
+ * Copyright (C) 2017 Atmark Techno, Inc. All Rights Reserved.
+ *
+ * This file is dual-licensed: you can use it either under the terms
+ * of the GPL or the X11 license, at your option. Note that this dual
+ * licensing only applies to this file, and not this project as a
+ * whole.
+ *
+ *  a) This file is free software; you can redistribute it and/or
+ *     modify it under the terms of the GNU General Public License as
+ *     published by the Free Software Foundation; either version 2 of the
+ *     License, or (at your option) any later version.
+ *
+ *     This file is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ * Or, alternatively,
+ *
+ *  b) Permission is hereby granted, free of charge, to any person
+ *     obtaining a copy of this software and associated documentation
+ *     files (the "Software"), to deal in the Software without
+ *     restriction, including without limitation the rights to use,
+ *     copy, modify, merge, publish, distribute, sublicense, and/or
+ *     sell copies of the Software, and to permit persons to whom the
+ *     Software is furnished to do so, subject to the following
+ *     conditions:
+ *
+ *     The above copyright notice and this permission notice shall be
+ *     included in all copies or substantial portions of the Software.
+ *
+ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *     OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/dts-v1/;
+
+#include "imx7d.dtsi"
+#include "armadillo_iotg_addon.dtsi"
+
+/ {
+	model = "Atmark-Techno Armadillo-X1 - minimal configuration";
+	compatible = "fsl,imx7d";
+
+	memory {
+		reg = <0x80000000 0x20000000>;
+	};
+
+	regulators: regulators0 {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		reg_sd1_vmmc: regulator-1 {
+			compatible = "regulator-fixed";
+			regulator-name = "VDD_SD1";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			gpio = <&gpio5 2 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
+			regulator-boot-on;
+		};
+	};
+
+	usdhc3_pwrseq: pwrseq@0 {
+		compatible = "mmc-pwrseq-emmc";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_usdhc3_pwrseq>;
+		reset-gpios = <&gpio6 11 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&cpu0 {
+	arm-supply = <&sw1a_reg>;
+};
+
+&i2c4 {
+	clock-frequency = <10000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_i2c4>;
+	status = "okay";
+
+	pmic: pfuze3000@09 {
+		compatible = "fsl,pfuze3000";
+		reg = <0x09>;
+
+		regulators {
+			sw1a_reg: sw1a {
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <1475000>;
+				regulator-boot-on;
+				regulator-always-on;
+				regulator-ramp-delay = <6250>;
+			};
+
+			/* use sw1c_reg to align with pfuze100/pfuze200 */
+			sw1c_reg: sw1b {
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <1475000>;
+				regulator-boot-on;
+				regulator-always-on;
+				regulator-ramp-delay = <6250>;
+			};
+
+			sw2_reg: sw2 {
+				regulator-min-microvolt = <1500000>;
+				regulator-max-microvolt = <1850000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			sw3a_reg: sw3 {
+				regulator-min-microvolt = <900000>;
+				regulator-max-microvolt = <1650000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			swbst_reg: swbst {
+				regulator-min-microvolt = <5000000>;
+				regulator-max-microvolt = <5150000>;
+			};
+
+			snvs_reg: vsnvs {
+				regulator-min-microvolt = <1000000>;
+				regulator-max-microvolt = <3000000>;
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			vref_reg: vrefddr {
+				regulator-boot-on;
+				regulator-always-on;
+			};
+
+			vgen1_reg: vldo1 {
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-always-on;
+			};
+
+			vgen2_reg: vldo2 {
+				regulator-min-microvolt = <800000>;
+				regulator-max-microvolt = <1550000>;
+			};
+
+			vgen3_reg: vccsd {
+				regulator-min-microvolt = <2850000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-always-on;
+			};
+
+			vgen4_reg: v33 {
+				regulator-min-microvolt = <2850000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-always-on;
+			};
+
+			vgen5_reg: vldo3 {
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-always-on;
+			};
+
+			vgen6_reg: vldo4 {
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-always-on;
+			};
+		};
+	};
+};
+
+&iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog>;
+
+	armadillo-iotg-g3 {
+		pinctrl_hog: hoggrp {
+			fsl,pins = <
+				/* USDHC1 */
+				MX7D_PAD_GPIO1_IO08__SD1_VSELECT	0x59 /* VSELECT */
+			>;
+		};
+
+		pinctrl_usdhc1: usdhc1grp {
+			fsl,pins = <
+				MX7D_PAD_SD1_CMD__SD1_CMD	0x0a
+				MX7D_PAD_SD1_CLK__SD1_CLK	0x0a
+				MX7D_PAD_SD1_DATA0__SD1_DATA0	0x0a
+				MX7D_PAD_SD1_DATA1__SD1_DATA1	0x0a
+				MX7D_PAD_SD1_DATA2__SD1_DATA2	0x0a
+				MX7D_PAD_SD1_DATA3__SD1_DATA3	0x0a
+				MX7D_PAD_SD1_CD_B__GPIO5_IO0	0x00
+				MX7D_PAD_SD1_WP__GPIO5_IO1	0x00
+				MX7D_PAD_SD1_RESET_B__GPIO5_IO2	0x00
+			>;
+		};
+
+		pinctrl_usdhc1_100mhz: usdhc1grp_100mhz {
+			fsl,pins = <
+				MX7D_PAD_SD1_CMD__SD1_CMD	0x09
+				MX7D_PAD_SD1_CLK__SD1_CLK	0x0a
+				MX7D_PAD_SD1_DATA0__SD1_DATA0	0x09
+				MX7D_PAD_SD1_DATA1__SD1_DATA1	0x09
+				MX7D_PAD_SD1_DATA2__SD1_DATA2	0x09
+				MX7D_PAD_SD1_DATA3__SD1_DATA3	0x09
+			>;
+		};
+
+		pinctrl_usdhc1_200mhz: usdhc1grp_200mhz {
+			fsl,pins = <
+				MX7D_PAD_SD1_CMD__SD1_CMD	0x0b
+				MX7D_PAD_SD1_CLK__SD1_CLK	0x09
+				MX7D_PAD_SD1_DATA0__SD1_DATA0	0x0b
+				MX7D_PAD_SD1_DATA1__SD1_DATA1	0x0b
+				MX7D_PAD_SD1_DATA2__SD1_DATA2	0x0b
+				MX7D_PAD_SD1_DATA3__SD1_DATA3	0x0b
+			>;
+		};
+
+		pinctrl_usdhc1_power_off: usdhc1grp_power_off {
+			fsl,pins = <
+				MX7D_PAD_SD1_CMD__GPIO5_IO4	0x00
+				MX7D_PAD_SD1_DATA0__GPIO5_IO5	0x00
+				MX7D_PAD_SD1_DATA1__GPIO5_IO6	0x00
+				MX7D_PAD_SD1_DATA2__GPIO5_IO7	0x00
+				MX7D_PAD_SD1_DATA3__GPIO5_IO8	0x00
+			>;
+		};
+
+		pinctrl_usdhc3: usdhc3grp {
+			fsl,pins = <
+				MX7D_PAD_SD3_CMD__SD3_CMD	0x0a
+				MX7D_PAD_SD3_CLK__SD3_CLK	0x0a
+				MX7D_PAD_SD3_DATA0__SD3_DATA0	0x0a
+				MX7D_PAD_SD3_DATA1__SD3_DATA1	0x0a
+				MX7D_PAD_SD3_DATA2__SD3_DATA2	0x0a
+				MX7D_PAD_SD3_DATA3__SD3_DATA3	0x0a
+				MX7D_PAD_SD3_DATA4__SD3_DATA4	0x0a
+				MX7D_PAD_SD3_DATA5__SD3_DATA5	0x0a
+				MX7D_PAD_SD3_DATA6__SD3_DATA6	0x0a
+				MX7D_PAD_SD3_DATA7__SD3_DATA7	0x0a
+				MX7D_PAD_SD3_STROBE__SD3_STROBE	0x0a
+			>;
+		};
+
+		pinctrl_usdhc3_pwrseq: pwrseq-usdhc3grp {
+			fsl,pins = <
+				MX7D_PAD_SD3_RESET_B__GPIO6_IO11	0x4000000a
+			>;
+		};
+
+		pinctrl_qspi1: qspi1grp {
+			fsl,pins = <
+				MX7D_PAD_EPDC_DATA00__QSPI_A_DATA0	0x51
+				MX7D_PAD_EPDC_DATA01__QSPI_A_DATA1	0x51
+				MX7D_PAD_EPDC_DATA02__QSPI_A_DATA2	0x51
+				MX7D_PAD_EPDC_DATA03__QSPI_A_DATA3	0x51
+				MX7D_PAD_EPDC_DATA05__QSPI_A_SCLK	0x51
+				MX7D_PAD_EPDC_DATA06__QSPI_A_SS0_B	0x51
+			>;
+		};
+
+		pinctrl_i2c4: i2c4grp {
+			fsl,pins = <
+				MX7D_PAD_GPIO1_IO11__I2C4_SDA	0x4000007f
+				MX7D_PAD_GPIO1_IO10__I2C4_SCL	0x4000007f
+			>;
+		};
+	};
+};
+
+&iomuxc_lpsr {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog_2>;
+
+	armadillo-iotg-g3 {
+		pinctrl_hog_2: hoggrp-2 {
+			fsl,pins = <
+				MX7D_PAD_GPIO1_IO00__WDOD1_WDOG_B	0x74
+			>;
+		};
+
+		pinctrl_lpsr_uart5: lpsr_uart5grp {
+			fsl,pins = <
+				MX7D_PAD_GPIO1_IO07__UART5_DCE_TX	0x00
+				MX7D_PAD_GPIO1_IO06__UART5_DCE_RX	0x79
+				MX7D_PAD_GPIO1_IO05__UART5_DCE_RTS	0x79
+				MX7D_PAD_GPIO1_IO04__UART5_DCE_CTS	0x00
+			>;
+		};
+	};
+};
+
+&uart5 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_lpsr_uart5>;
+	assigned-clocks = <&clks IMX7D_UART5_ROOT_SRC>;
+	assigned-clock-parents = <&clks IMX7D_PLL_SYS_MAIN_240M_CLK>;
+	status = "okay";
+};
+
+&usdhc1 {
+	pinctrl-names = "default", "state_100mhz", "state_200mhz",
+			"state_power_off";
+	pinctrl-0 = <&pinctrl_usdhc1>;
+	pinctrl-1 = <&pinctrl_usdhc1_100mhz>;
+	pinctrl-2 = <&pinctrl_usdhc1_200mhz>;
+	pinctrl-3 = <&pinctrl_usdhc1_power_off>;
+	cd-gpios = <&gpio5 0 GPIO_ACTIVE_LOW>;
+	wp-gpios = <&gpio5 1 GPIO_ACTIVE_HIGH>;
+	pinctrl-assert-gpios = <&gpio5 4 GPIO_ACTIVE_LOW>,	/* SD1_CMD */
+			       <&gpio5 5 GPIO_ACTIVE_LOW>,	/* SD1_DATA0 */
+			       <&gpio5 6 GPIO_ACTIVE_LOW>,	/* SD1_DATA1 */
+			       <&gpio5 7 GPIO_ACTIVE_LOW>,	/* SD1_DATA2 */
+			       <&gpio5 8 GPIO_ACTIVE_LOW>;	/* SD1_DATA3 */
+	tuning-step = <2>;
+	vmmc-supply = <&reg_sd1_vmmc>;
+	enable-sdio-wakeup;
+	bus-width = <4>;
+	keep-power-in-suspend;
+	support-clk-limit;
+	fsl,no-ddr50-support;
+	status = "okay";
+};
+
+&usdhc3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usdhc3>;
+	assigned-clocks = <&clks IMX7D_USDHC3_ROOT_CLK>;
+	assigned-clock-rates = <400000000>;
+	bus-width = <8>;
+	fsl,tuning-step = <2>;
+	non-removable;
+	mmc-pwrseq = <&usdhc3_pwrseq>;
+	status = "okay";
+};
+
+&qspi1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_qspi1>;
+	status = "okay";
+	ddrsmp=<0>;
+
+	flash0: n25q064@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "n25q064";
+		spi-max-frequency = <29000000>;
+
+		partition@0 {
+			label = "bootloader";
+			reg = <0x00000000 0x00100000>;
+		};
+		partition@1 {
+			label = "license";
+			reg = <0x00100000 0x00040000>;
+		};
+		partition@2 {
+			label = "reserved";
+			reg = <0x00140000 0x006c0000>;
+		};
+	};
+};
+
+&wdog1 {
+	timeout-sec = <10>;
+	fsl,ext-reset-output;
+};
