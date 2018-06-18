@@ -68,7 +68,7 @@ static int bmic_regulator_probe(struct i2c_client *client,
 		 BMIC_REGULATOR_MAJOR_VERSION(ver),
 		 BMIC_REGULATOR_MINOR_VERSION(ver));
 
-	bmic = devm_kzalloc(&client->dev, sizeof(bmic), GFP_KERNEL);
+	bmic = devm_kzalloc(&client->dev, sizeof(*bmic), GFP_KERNEL);
 	if (!bmic) {
 		dev_err(&client->dev, "Memory allocation failed\n");
 		return -ENOMEM;
