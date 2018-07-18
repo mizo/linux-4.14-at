@@ -206,6 +206,32 @@ static int bmic_rtc_probe(struct i2c_client *client,
 	return 0;
 }
 
+#ifdef CONFIG_PM_SLEEP
+static int bmic_rtc_suspend(struct device *dev)
+{
+	struct bmic_rtc *rtc = dev_get_drvdata(dev);
+
+	if (device_may_wakeup(dev))
+		enable_irq_wake(gpio_to_irq(rtc->irq_gpio));
+
+	return 0;
+}
+
+static int bmic_rtc_resume(struct device *dev)
+{
+	struct bmic_rtc *rtc = dev_get_drvdata(dev);
+
+	if (device_may_wakeup(dev))
+		disable_irq_wake(gpio_to_irq(rtc->irq_gpio));
+
+	return 0;
+}
+#endif
+
+static const struct dev_pm_ops bmic_rtc_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(bmic_rtc_suspend, bmic_rtc_resume)
+};
+
 static const struct i2c_device_id bmic_rtc_id[] = {
 	{ "bmic_rtc", 0 },
 	{ }
@@ -223,6 +249,7 @@ MODULE_DEVICE_TABLE(of, bmic_rtc_of_match);
 static struct i2c_driver bmic_rtc_driver = {
 	.driver		= {
 		.name	= "bmic_rtc",
+		.pm	= &bmic_rtc_pm_ops,
 		.of_match_table = of_match_ptr(bmic_rtc_of_match),
 	},
 	.probe		= bmic_rtc_probe,
