@@ -1,0 +1,58 @@
+/*
+ * Copyright (C) 2018 Atmark Techno, Inc. All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+#include "armadillo_x1.dts"
+
+/*
+ * CON8_47: USB_OTG2_DP(No muxing)
+ * CON8_48: USB_OTG2_DN(No muxing)
+ * CON8_50: USB_OTG2_VBUS(No muxing)
+ * CON8_68: USB_OTG2_ID
+ *
+ * CON8_100: GPIO3_IO28(USB power switch enable, active high)
+ */
+&iomuxc {
+	x1_ext {
+		pinctrl_usbotg2: usbotg2grp {
+			fsl,pins = <
+				MX7D_PAD_SD2_RESET_B__USB_OTG2_ID	0x00
+				MX7D_PAD_LCD_DATA23__GPIO3_IO28		0x00
+			>;
+		};
+	};
+};
+
+/ {
+	x1_ext_regulators {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		reg_usb_otg2_vbus: regulator_usb_otg2_vbus {
+			compatible = "regulator-fixed";
+			regulator-name = "USB_OTG2_VBUS";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			gpio = <&gpio3 28 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
+		};
+	};
+};
+
+&usbotg2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usbotg2>;
+	vbus-supply = <&reg_usb_otg2_vbus>;
+	disable-over-current;
+	dr_mode = "otg";
+	status = "okay";
+};
+
+&usbmisc2 {
+	use-muxed-id;
+};
