@@ -1,0 +1,60 @@
+/*
+ * Copyright (C) 2018 Atmark Techno, Inc. All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+#include "armadillo_x1.dts"
+
+/*
+ * CON8_72: ECSPI4_MISO
+ * CON8_73: ECSPI4_MOSI
+ * CON8_74: ECSPI4_SCLK
+ * CON8_75: GPIO3_IO3(Chip select)
+ */
+&iomuxc {
+	x1_ext {
+		pinctrl_ecspi4: ecspi4grp {
+			fsl,pins = <
+				MX7D_PAD_LCD_CLK__ECSPI4_MISO		0x70
+				MX7D_PAD_LCD_ENABLE__ECSPI4_MOSI	0x70
+				MX7D_PAD_LCD_HSYNC__ECSPI4_SCLK		0x70
+				MX7D_PAD_LCD_VSYNC__GPIO3_IO3		0x70
+			>;
+		};
+	};
+};
+
+/ {
+	x1_ext_regulators {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		reg_mcp3202_vref: regulator_mcp3202_vref {
+			compatible = "regulator-fixed";
+			regulator-name = "MCP3202_VREF";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			regulator-always-on;
+		};
+	};
+};
+
+&ecspi4 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ecspi4>;
+
+	fsl,spi-num-chipselects = <1>;
+	cs-gpios = <&gpio3 3 GPIO_ACTIVE_HIGH>;
+	status = "okay";
+
+	mcp3202@0 {
+		compatible = "mcp3202";
+		spi-max-frequency = <1000000>;
+		reg = <0>;
+		vref-supply = <&reg_mcp3202_vref>;
+	};
+};
