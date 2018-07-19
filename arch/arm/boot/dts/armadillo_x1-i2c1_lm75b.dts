@@ -1,0 +1,36 @@
+/*
+ * Copyright (C) 2018 Atmark Techno, Inc. All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+#include "armadillo_x1.dts"
+
+/*
+ * CON8_20: I2C1_SCL(have external pull-up)
+ * CON8_21: I2C1_SDA(have external pull-up)
+ */
+&iomuxc {
+	x1_ext {
+		pinctrl_i2c1: i2c1grp {
+			fsl,pins = <
+				MX7D_PAD_I2C1_SCL__I2C1_SCL	0x4000007f
+				MX7D_PAD_I2C1_SDA__I2C1_SDA	0x4000007f
+			>;
+		};
+	};
+};
+
+&i2c1 {
+	clock-frequency = <400000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_i2c1>;
+	status = "okay";
+
+	sensor: lm75b@48 {
+		compatible = "lm75b";
+		reg = <0x48>;
+	};
+};

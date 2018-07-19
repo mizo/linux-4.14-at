@@ -581,6 +581,7 @@ dtb-$(CONFIG_SOC_IMX7D) += \
 	armadillo_x1.dtb \
 	armadillo_x1-fec1.dtb \
 	armadillo_x1-usbotg2.dtb \
+	armadillo_x1-i2c1_lm75b.dtb \
 	armadillo_iotg_g3l.dtb \
 	armadillo_x1-extboard-eva01-usbhost.dtb \
 	armadillo_x1-extboard-eva01-usbdevice.dtb \
