@@ -568,3 +568,12 @@
 		line-name = "SVEN";
 	};
 };
+
+&gpio3 {
+	rx_gate {
+		gpio-hog;
+		gpios = <4 GPIO_ACTIVE_HIGH>;
+		output-low;
+		line-name = "RX_GATE";
+	};
+};
