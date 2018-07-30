@@ -463,6 +463,7 @@
 	fsl,rs485-duplex-type = "gpio";
 	fsl,rs485-duplex-gpio = <&gpio3 5 GPIO_ACTIVE_HIGH>;
 	fsl,rs485-duplex-active-low;
+	fsl,uart-has-rtscts;
 	status = "okay";
 };
 
