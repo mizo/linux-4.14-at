@@ -373,7 +373,13 @@ int ion_handle_put_wrap(struct ion_handle *handle)
 struct ion_handle *ion_handle_get_by_id_wrap(struct ion_client *client,
 						int id)
 {
-	return ion_handle_get_by_id(client, id);
+	struct ion_handle *handle;
+
+	mutex_lock(&client->lock);
+	handle = ion_handle_get_by_id_nolock(client, id);
+	mutex_unlock(&client->lock);
+
+	return handle;
 }
 
 struct device *ion_device_get_by_client(struct ion_client *client)
