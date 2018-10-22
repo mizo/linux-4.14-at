@@ -293,9 +293,6 @@
 	armadillo-iotg-g3 {
 		pinctrl_hog: hoggrp {
 			fsl,pins = <
-				/* Add-On Module I/F */
-				MX7D_PAD_EPDC_PWR_STAT__GPIO2_IO31	0x00 /* G_AOM_USB_PWREN */
-
 				/* USB3503 */
 				MX7D_PAD_EPDC_DATA13__GPIO2_IO13	0x00 /* GPIO_USB_HUB_RESET_N */
 				MX7D_PAD_EPDC_DATA14__GPIO2_IO14	0x04 /* GPIO_USB_HUB_INT_N */

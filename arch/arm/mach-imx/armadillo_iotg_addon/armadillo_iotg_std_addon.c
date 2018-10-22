@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Atmark Techno, Inc. All Rights Reserved.
+ * Copyright (C) 2017-2018 Atmark Techno, Inc. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,6 +46,7 @@ struct addon_vendor_name
 static struct addon_vendor_name vendor_names[] = {
 	VENDOR_NAME(ATMARK_TECHNO, "Atmark Techno"),
 	VENDOR_NAME(SATORI, "Satori"),
+	VENDOR_NAME(ADVALY, "Advaly"),
 };
 
 static const char *unknownvendorname = "Unknown Vendor";
@@ -73,6 +74,7 @@ static struct addon_product_name product_names[] = {
 	PRODUCT_NAME(SATORI, B_ROUTE, "B_ROUTE"),
 	PRODUCT_NAME(SATORI, 920M, "920M"),
 	PRODUCT_NAME(SATORI, LOW_POWER, "LOW_POWER"),
+	PRODUCT_NAME(ADVALY, USBLAN, "USB/LAN"),
 };
 
 static const char *unknownproductname = "Unknown Product";
@@ -202,6 +204,15 @@ static int addon_setup(struct addon_device *adev)
 		case ADDON_PRODUCT_ID_SATORI_920M:
 		case ADDON_PRODUCT_ID_SATORI_LOW_POWER:
 			ret = addon_setup_satori_wireless(adev);
+			break;
+		default:
+			break;
+		}
+		break;
+	case ADDON_VENDOR_ID_ADVALY:
+		switch (product_id) {
+		case ADDON_PRODUCT_ID_ADVALY_USBLAN:
+			ret = addon_setup_advaly_usblan(adev);
 			break;
 		default:
 			break;

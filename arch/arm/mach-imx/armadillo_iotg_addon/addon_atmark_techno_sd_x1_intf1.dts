@@ -62,6 +62,12 @@
 						MX7D_PAD_SD1_DATA3__GPIO5_IO8	0x00 /* INTF1_15 */
 					>;
 				};
+
+				pinctrl_reg_aom_usb_vbus: reg_aom_usb_vbusgrp {
+					fsl,pins = <
+						MX7D_PAD_EPDC_PWR_STAT__GPIO2_IO31 0x00	/* G_AOM_USB_PWREN */
+					>;
+				};
 			};
 		};
 	};
@@ -111,6 +117,8 @@
 		__overlay__ {
 			reg_aom_usb_vbus_intf1: reg_aom_usb_vbus_con7 {
 				compatible = "regulator-fixed";
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_reg_aom_usb_vbus>;
 				regulator-name = "USB_AOM_USB_VBUS";
 				regulator-min-microvolt = <5000000>;
 				regulator-max-microvolt = <5000000>;

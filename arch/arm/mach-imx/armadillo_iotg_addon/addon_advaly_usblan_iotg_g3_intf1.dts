@@ -1,0 +1,53 @@
+/*
+ * Copyright (C) 2018 Atmark Techno, Inc. All Rights Reserved.
+ * Author: Daisuke Mizobuchi <mizo@atmark-techno.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * version 2 as published by the Free Software Foundation.
+ */
+
+#include <dt-bindings/clock/imx7d-clock.h>
+#include "../../../../arch/arm/boot/dts/imx7d-pinfunc.h"
+
+/dts-v1/;
+/plugin/;
+/ {
+	fragment@0 {
+		target = <&iomuxc>;
+		__overlay__ {
+			addon-intf1 {
+				pinctrl_usbotg2: usbotg2grp {
+					fsl,pins = <
+						MX7D_PAD_LCD_RESET__GPIO3_IO4 0x00	/* GPIO_AOM1_VBUS_PWREN */
+					>;
+				};
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&regulators>;
+		__overlay__ {
+			reg_usb_otg2_vbus: reg-usb-otg2-vbus {
+				compatible = "regulator-fixed";
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_usbotg2>;
+				regulator-name = "USB_OTG2_VBUS";
+				regulator-min-microvolt = <5000000>;
+				regulator-max-microvolt = <5000000>;
+				gpio = <&gpio3 4 0>;
+				enable-active-high;
+			};
+		};
+	};
+
+	fragment@2 {
+		target = <&usbotg2>;
+		__overlay__ {
+			vbus-supply = <&reg_usb_otg2_vbus>;
+			dr_mode = "host";
+			status = "okay";
+		};
+	};
+};

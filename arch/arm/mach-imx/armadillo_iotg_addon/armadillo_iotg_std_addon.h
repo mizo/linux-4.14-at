@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Atmark Techno, Inc. All Rights Reserved.
+ * Copyright (C) 2015-2018 Atmark Techno, Inc. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,6 +59,7 @@ struct armadillo_iotg_addon {
 /* EEPROM vendor ID */
 #define ADDON_VENDOR_ID_ATMARK_TECHNO	(0x0001)
 #define ADDON_VENDOR_ID_SATORI		(0x0005)
+#define ADDON_VENDOR_ID_ADVALY		(0x0007)
 
 /* EEPROM Atmark Techno product ID */
 #define ADDON_PRODUCT_ID_ATMARK_TECHNO_WI_SUN	(0x0001)
@@ -76,6 +77,9 @@ struct armadillo_iotg_addon {
 #define ADDON_PRODUCT_ID_SATORI_B_ROUTE		(0x0001)
 #define ADDON_PRODUCT_ID_SATORI_920M		(0x0002)
 #define ADDON_PRODUCT_ID_SATORI_LOW_POWER	(0x0003)
+
+/* EEPROM Advaly product ID */
+#define ADDON_PRODUCT_ID_ADVALY_USBLAN		(0x0002)
 
 #define dtb_begin(f)	__dtb_##f##_begin
 #define dtb_end(f)	__dtb_##f##_end
@@ -98,5 +102,7 @@ int addon_setup_atmark_techno_rs485(struct addon_device *adev);
 int addon_setup_atmark_techno_sd(struct addon_device *adev);
 
 int addon_setup_satori_wireless(struct addon_device *adev);
+
+int addon_setup_advaly_usblan(struct addon_device *adev);
 
 #endif
