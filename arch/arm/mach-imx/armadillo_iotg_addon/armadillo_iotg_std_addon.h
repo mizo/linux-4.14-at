@@ -80,6 +80,7 @@ struct armadillo_iotg_addon {
 
 /* EEPROM Advaly product ID */
 #define ADDON_PRODUCT_ID_ADVALY_USBLAN		(0x0002)
+#define ADDON_PRODUCT_ID_ADVALY_SPICAN		(0x0003)
 
 #define dtb_begin(f)	__dtb_##f##_begin
 #define dtb_end(f)	__dtb_##f##_end
@@ -104,5 +105,6 @@ int addon_setup_atmark_techno_sd(struct addon_device *adev);
 int addon_setup_satori_wireless(struct addon_device *adev);
 
 int addon_setup_advaly_usblan(struct addon_device *adev);
+int addon_setup_advaly_spican(struct addon_device *adev);
 
 #endif

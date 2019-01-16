@@ -75,6 +75,7 @@ static struct addon_product_name product_names[] = {
 	PRODUCT_NAME(SATORI, 920M, "920M"),
 	PRODUCT_NAME(SATORI, LOW_POWER, "LOW_POWER"),
 	PRODUCT_NAME(ADVALY, USBLAN, "USB/LAN"),
+	PRODUCT_NAME(ADVALY, SPICAN, "Can"),
 };
 
 static const char *unknownproductname = "Unknown Product";
@@ -213,6 +214,9 @@ static int addon_setup(struct addon_device *adev)
 		switch (product_id) {
 		case ADDON_PRODUCT_ID_ADVALY_USBLAN:
 			ret = addon_setup_advaly_usblan(adev);
+			break;
+		case ADDON_PRODUCT_ID_ADVALY_SPICAN:
+			ret = addon_setup_advaly_spican(adev);
 			break;
 		default:
 			break;
