@@ -1129,6 +1129,8 @@ ifeq ($(CONFIG_OF_RESOLVE),y)
 DTC_FLAGS_armadillo_iotg_g3 := -@
 DTC_FLAGS_armadillo_iotg_g3_m1 := -@
 DTC_FLAGS_armadillo_x1 := -@
+DTC_FLAGS_armadillo_x1-extboard-eva01-usbhost := -@
+DTC_FLAGS_armadillo_x1-extboard-eva01-usbdevice := -@
 DTC_FLAGS_armadillo_iotg_g3l := -@
 endif
 
