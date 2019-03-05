@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Atmark Techno, Inc. All Rights Reserved.
+ * Copyright (C) 2017-2019 Atmark Techno, Inc. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -71,6 +71,7 @@ static struct addon_product_name product_names[] = {
 	PRODUCT_NAME(ATMARK_TECHNO, RS232C, "RS232C"),
 	PRODUCT_NAME(ATMARK_TECHNO, RS485, "RS485"),
 	PRODUCT_NAME(ATMARK_TECHNO, SD, "SD"),
+	PRODUCT_NAME(ATMARK_TECHNO, THREAD, "THREAD"),
 	PRODUCT_NAME(SATORI, B_ROUTE, "B_ROUTE"),
 	PRODUCT_NAME(SATORI, 920M, "920M"),
 	PRODUCT_NAME(SATORI, LOW_POWER, "LOW_POWER"),
@@ -194,6 +195,9 @@ static int addon_setup(struct addon_device *adev)
 			break;
 		case ADDON_PRODUCT_ID_ATMARK_TECHNO_SD:
 			ret = addon_setup_atmark_techno_sd(adev);
+			break;
+		case ADDON_PRODUCT_ID_ATMARK_TECHNO_THREAD:
+			ret = addon_setup_atmark_techno_thread(adev);
 			break;
 		default:
 			break;

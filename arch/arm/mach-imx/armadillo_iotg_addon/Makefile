@@ -41,6 +41,11 @@ obj-y += addon_atmark_techno_rs485.o \
 obj-y += addon_atmark_techno_sd.o \
 	 addon_atmark_techno_sd_x1_intf1.dtb.o
 
+obj-y += addon_atmark_techno_thread.o \
+	 addon_atmark_techno_thread_iotg_g3_intf1.dtb.o \
+	 addon_atmark_techno_thread_iotg_g3_intf2.dtb.o \
+	 addon_atmark_techno_thread_x1_intf1.dtb.o
+
 obj-y += addon_satori_wireless.o \
 	 addon_satori_wireless_iotg_g3_intf1.dtb.o \
 	 addon_satori_wireless_iotg_g3_intf2.dtb.o \
