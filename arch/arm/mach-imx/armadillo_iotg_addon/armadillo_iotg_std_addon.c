@@ -152,6 +152,7 @@ static const char *addon_get_product_name(u16 vendor, u16 product)
 static int addon_setup(struct addon_device *adev)
 {
 	struct addon_device_descriptor *desc = &adev->desc;
+	struct addon_device_identifier *ident = &adev->ident;
 	struct armadillo_iotg_addon *addon = to_addon(adev);
 	u16 vendor_id = be16_to_cpu(desc->vendor_id);
 	u16 product_id = be16_to_cpu(desc->product_id);
@@ -161,8 +162,7 @@ static int addon_setup(struct addon_device *adev)
 
 	dev_info(addon->dev, "%s %s board detected at "
 		 "Add-On Module I/F %d(Rev %d, SerialNumber=%d).\n",
-		 addon_get_vendor_name(vendor_id),
-		 addon_get_product_name(vendor_id, product_id),
+		 ident->vendor_name, ident->product_name,
 		 adev->intf, revision, serial_no);
 
 	switch (vendor_id) {
@@ -282,6 +282,16 @@ static void addon_get_gpios(struct addon_device *adev)
 		adev->gpios[i] = of_get_named_gpio(np, name, i);
 }
 
+static void addon_set_ident(struct addon_device *adev)
+{
+	struct addon_device_descriptor *desc = &adev->desc;
+	u16 vendor_id = be16_to_cpu(desc->vendor_id);
+	u16 product_id = be16_to_cpu(desc->product_id);
+
+	adev->ident.vendor_name = addon_get_vendor_name(vendor_id);
+	adev->ident.product_name = addon_get_product_name(vendor_id, product_id);
+}
+
 #define __ADDON_ATTR_RO(_name, _idx) {					\
 	.attr	= { .name = __stringify(_name), .mode = S_IRUGO },	\
 	.show	= _name##_idx##_show,					\
@@ -370,6 +380,7 @@ static int addon_detect(struct addon_device *adev)
 	ret = addon_get_descriptor(&adev->desc, addon->adap, addr);
 	if (!ret) {
 		addon_get_gpios(adev);
+		addon_set_ident(adev);
 		ret = addon_setup(adev);
 		if (!ret) {
 			ret = sysfs_create_group(&addon->dev->kobj, grp);

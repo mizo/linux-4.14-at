@@ -28,6 +28,11 @@ struct addon_device_descriptor {
 	__u8	vendor_specific[96];
 } __attribute__ ((packed));
 
+struct addon_device_identifier {
+	const char *vendor_name;
+	const char *product_name;
+};
+
 enum addon_interface {
 	ADDON_INTERFACE1 = 1,
 	ADDON_INTERFACE2 = 2,
@@ -43,6 +48,7 @@ enum addon_board_type {
 struct addon_device {
 	enum addon_interface intf;
 	struct addon_device_descriptor desc;
+	struct addon_device_identifier ident;
 	int gpios[NR_ADDON_PINS];
 };
 
