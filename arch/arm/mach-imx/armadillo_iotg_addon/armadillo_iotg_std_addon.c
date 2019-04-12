@@ -321,6 +321,16 @@ static ssize_t _name##_idx##_show(struct device *dev,			\
 }									\
 static ADDON_DEVICE_ATTR_RO(_name, _idx)
 
+#define ADDON_SHOW_IDENT_STR(_name, _idx)			\
+static ssize_t _name##_idx##_show(struct device *dev,			\
+			    struct device_attribute *attr, char *buf)	\
+{									\
+	struct armadillo_iotg_addon *addon = dev_get_drvdata(dev);	\
+	return sprintf(buf, "%s\n",					\
+		       addon->adev[_idx].ident._name);	\
+}									\
+static ADDON_DEVICE_ATTR_RO(_name, _idx)
+
 ADDON_SHOW_BE16(vendor_id, 1);
 ADDON_SHOW_BE16(vendor_id, 2);
 ADDON_SHOW_BE16(product_id, 1);
@@ -329,12 +339,18 @@ ADDON_SHOW_BE16(revision, 1);
 ADDON_SHOW_BE16(revision, 2);
 ADDON_SHOW_BE32(serial_no, 1);
 ADDON_SHOW_BE32(serial_no, 2);
+ADDON_SHOW_IDENT_STR(vendor_name, 1);
+ADDON_SHOW_IDENT_STR(vendor_name, 2);
+ADDON_SHOW_IDENT_STR(product_name, 1);
+ADDON_SHOW_IDENT_STR(product_name, 2);
 
 static struct attribute *addon_attrs1[] = {
 	&dev_attr_vendor_id1.attr,
 	&dev_attr_product_id1.attr,
 	&dev_attr_revision1.attr,
 	&dev_attr_serial_no1.attr,
+	&dev_attr_vendor_name1.attr,
+	&dev_attr_product_name1.attr,
 	NULL
 };
 
@@ -343,6 +359,8 @@ static struct attribute *addon_attrs2[] = {
 	&dev_attr_product_id2.attr,
 	&dev_attr_revision2.attr,
 	&dev_attr_serial_no2.attr,
+	&dev_attr_vendor_name2.attr,
+	&dev_attr_product_name2.attr,
 	NULL
 };
 
