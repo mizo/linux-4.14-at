@@ -301,7 +301,7 @@ static void addon_set_ident(struct addon_device *adev)
 	struct device_attribute dev_attr_##_name##_idx =	\
 				__ADDON_ATTR_RO(_name, _idx)
 
-#define ADDON_SHOW_BE16(_name, _idx)					\
+#define ADDON_SHOW_DESC_BE16(_name, _idx)					\
 static ssize_t _name##_idx##_show(struct device *dev,			\
 			    struct device_attribute *attr, char *buf)	\
 {									\
@@ -311,7 +311,7 @@ static ssize_t _name##_idx##_show(struct device *dev,			\
 }									\
 static ADDON_DEVICE_ATTR_RO(_name, _idx)
 
-#define ADDON_SHOW_BE32(_name, _idx)					\
+#define ADDON_SHOW_DESC_BE32(_name, _idx)					\
 static ssize_t _name##_idx##_show(struct device *dev,			\
 			    struct device_attribute *attr, char *buf)	\
 {									\
@@ -331,14 +331,14 @@ static ssize_t _name##_idx##_show(struct device *dev,			\
 }									\
 static ADDON_DEVICE_ATTR_RO(_name, _idx)
 
-ADDON_SHOW_BE16(vendor_id, 1);
-ADDON_SHOW_BE16(vendor_id, 2);
-ADDON_SHOW_BE16(product_id, 1);
-ADDON_SHOW_BE16(product_id, 2);
-ADDON_SHOW_BE16(revision, 1);
-ADDON_SHOW_BE16(revision, 2);
-ADDON_SHOW_BE32(serial_no, 1);
-ADDON_SHOW_BE32(serial_no, 2);
+ADDON_SHOW_DESC_BE16(vendor_id, 1);
+ADDON_SHOW_DESC_BE16(vendor_id, 2);
+ADDON_SHOW_DESC_BE16(product_id, 1);
+ADDON_SHOW_DESC_BE16(product_id, 2);
+ADDON_SHOW_DESC_BE16(revision, 1);
+ADDON_SHOW_DESC_BE16(revision, 2);
+ADDON_SHOW_DESC_BE32(serial_no, 1);
+ADDON_SHOW_DESC_BE32(serial_no, 2);
 ADDON_SHOW_IDENT_STR(vendor_name, 1);
 ADDON_SHOW_IDENT_STR(vendor_name, 2);
 ADDON_SHOW_IDENT_STR(product_name, 1);
