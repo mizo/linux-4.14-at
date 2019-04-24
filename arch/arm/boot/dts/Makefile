@@ -578,6 +578,7 @@ dtb-$(CONFIG_SOC_IMX7D) += \
 	imx7d-sdb-reva-wm8960.dtb \
 	armadillo_iotg_g3.dtb \
 	armadillo_iotg_g3_m1.dtb \
+	armadillo_iotg_g3_w2.dtb \
 	armadillo_x1.dtb \
 	armadillo_x1-fec1.dtb \
 	armadillo_x1-usbotg2.dtb \
