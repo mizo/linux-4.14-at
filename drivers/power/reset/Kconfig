@@ -46,6 +46,13 @@ config POWER_RESET_AXXIA
 
 	  Say Y if you have an Axxia family SoC.
 
+config POWER_RESET_BMIC
+	bool "Atmark Techno BMIC reset"
+	depends on OF_GPIO
+	depends on I2C
+	help
+	  Say yes here to build support for Atmark Techno BMIC reset.
+
 config POWER_RESET_BRCMKONA
 	bool "Broadcom Kona reset driver"
 	depends on ARM || COMPILE_TEST
