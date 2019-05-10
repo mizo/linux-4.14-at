@@ -102,6 +102,10 @@
 		reset-gpios = <&gpio6 11 GPIO_ACTIVE_LOW>;
 	};
 
+	/*
+	 * Overridden by poweroff_bmic if BMIC version 3.2 or
+	 * later
+	 */
 	poweroff {
 		compatible = "gpio-poweroff";
 		gpios = <&gpio_bmic 2 GPIO_ACTIVE_LOW>;
@@ -191,6 +195,13 @@
 		regulator-max-microvolt = <3600000>;
 		regulator-boot-on;
 		regulator-always-on;
+	};
+
+	poweroff_bmic: bmic_poweroff@18 {
+		compatible = "at,bmic_poweroff";
+		reg = <0x18>;
+		gpios = <&gpio_bmic 0 GPIO_ACTIVE_HIGH>;
+		turn-on-delay = <0>; /* a value of 0 means "do not turn on" */
 	};
 
 	pmic: pfuze3000@09 {
