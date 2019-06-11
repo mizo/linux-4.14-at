@@ -382,6 +382,7 @@ static void imx_port_ucrs_restore(struct uart_port *port,
 }
 #endif
 
+/* called with port.lock taken and irqs caller dependent */
 static void imx_port_rts_active(struct imx_port *sport, unsigned long *ucr2)
 {
 	*ucr2 &= ~UCR2_CTSC;
@@ -391,6 +392,7 @@ static void imx_port_rts_active(struct imx_port *sport, unsigned long *ucr2)
 	mctrl_gpio_set(sport->gpios, sport->port.mctrl);
 }
 
+/* called with port.lock taken and irqs caller dependent */
 static void imx_port_rts_inactive(struct imx_port *sport, unsigned long *ucr2)
 {
 	*ucr2 &= ~(UCR2_CTSC | UCR2_CTS);
@@ -399,6 +401,7 @@ static void imx_port_rts_inactive(struct imx_port *sport, unsigned long *ucr2)
 	mctrl_gpio_set(sport->gpios, sport->port.mctrl);
 }
 
+/* called with port.lock taken and irqs caller dependent */
 static void imx_port_rts_auto(struct imx_port *sport, unsigned long *ucr2)
 {
 	*ucr2 |= UCR2_CTSC;
@@ -1699,6 +1702,16 @@ imx_set_termios(struct uart_port *port, struct ktermios *termios,
 		old_csize = CS8;
 	}
 
+	del_timer_sync(&sport->timer);
+
+	/*
+	 * Ask the core to calculate the divisor for us.
+	 */
+	baud = uart_get_baud_rate(port, termios, old, 50, port->uartclk / 16);
+	quot = uart_get_divisor(port, baud);
+
+	spin_lock_irqsave(&sport->port.lock, flags);
+
 	if ((termios->c_cflag & CSIZE) == CS8)
 		ucr2 = UCR2_WS | UCR2_SRST | UCR2_IRTS;
 	else
@@ -1743,16 +1756,6 @@ imx_set_termios(struct uart_port *port, struct ktermios *termios,
 		if (termios->c_cflag & PARODD)
 			ucr2 |= UCR2_PROE;
 	}
-
-	del_timer_sync(&sport->timer);
-
-	/*
-	 * Ask the core to calculate the divisor for us.
-	 */
-	baud = uart_get_baud_rate(port, termios, old, 50, port->uartclk / 16);
-	quot = uart_get_divisor(port, baud);
-
-	spin_lock_irqsave(&sport->port.lock, flags);
 
 	sport->port.read_status_mask = 0;
 	if (termios->c_iflag & INPCK)
