@@ -102,6 +102,56 @@ static ssize_t cold_reset_reset_store(struct device *dev,
 }
 static DEVICE_ATTR(reset, S_IWUSR, NULL, cold_reset_reset_store);
 
+static ssize_t cold_reset_assert_store(struct device *dev,
+				       struct device_attribute *attr,
+				       const char *buf, size_t count)
+{
+	struct platform_device *pdev= to_platform_device(dev);
+	struct cold_reset_data *drvdata = platform_get_drvdata(pdev);
+	int val, ret;
+
+	ret = kstrtoint(buf, 0, &val);
+	if (ret)
+		return ret;
+
+	if (val)
+		ret = cold_reset_assert(&drvdata->rcdev, 0);
+
+	return ret ? : count;
+}
+static DEVICE_ATTR(assert, S_IWUSR, NULL, cold_reset_assert_store);
+
+static ssize_t cold_reset_deassert_store(struct device *dev,
+					 struct device_attribute *attr,
+					 const char *buf, size_t count)
+{
+	struct platform_device *pdev= to_platform_device(dev);
+	struct cold_reset_data *drvdata = platform_get_drvdata(pdev);
+	int val, ret;
+
+	ret = kstrtoint(buf, 0, &val);
+	if (ret)
+		return ret;
+
+	if (val)
+		ret = cold_reset_deassert(&drvdata->rcdev, 0);
+
+	return ret ? : count;
+}
+static DEVICE_ATTR(deassert, S_IWUSR, NULL, cold_reset_deassert_store);
+
+static struct attribute *cold_reset_attrs[] = {
+	&dev_attr_reset.attr,
+	&dev_attr_assert.attr,
+	&dev_attr_deassert.attr,
+	NULL
+};
+
+static struct attribute_group cold_reset_attr_group = {
+	.name = NULL, /* put in device directory */
+	.attrs = cold_reset_attrs,
+};
+
 static int of_cold_reset_xlate(struct reset_controller_dev *rcdev,
 			       const struct of_phandle_args *reset_spec)
 {
@@ -178,7 +228,7 @@ static int cold_reset_probe(struct platform_device *pdev)
 	else
 		cold_reset_deassert(&drvdata->rcdev, 0);
 
-	ret = device_create_file(&pdev->dev, &dev_attr_reset);
+	ret = sysfs_create_group(&pdev->dev.kobj, &cold_reset_attr_group);
 	if (ret < 0)
 		return ret;
 
@@ -190,6 +240,7 @@ static int cold_reset_remove(struct platform_device *pdev)
 	struct cold_reset_data *drvdata = platform_get_drvdata(pdev);
 
 	reset_controller_unregister(&drvdata->rcdev);
+	sysfs_remove_group(&pdev->dev.kobj, &cold_reset_attr_group);
 
 	return 0;
 }
