@@ -227,6 +227,7 @@
 		clock-names = "refclk";
 
 		refclk-frequency = <24000000>;
+		vsns21-squelch = <0x60>;
 		intn-gpios = <&gpio2 14 GPIO_ACTIVE_HIGH>;
 		connect-gpios = <&gpio2 15 GPIO_ACTIVE_HIGH>;
 		reset-gpios = <&gpio2 13 GPIO_ACTIVE_HIGH>;
