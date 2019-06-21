@@ -71,17 +71,6 @@
 			enable-active-high;
 		};
 
-		reg_usbotg2_vbus: regulator-usbotg2vbus {
-			pinctrl-names = "default";
-			pinctrl-0 = <&pinctrl_usbotg2_vbus>;
-			compatible = "regulator-fixed";
-			regulator-name = "USB_OTG2_VBUS";
-			regulator-min-microvolt = <5000000>;
-			regulator-max-microvolt = <5000000>;
-			gpio = <&gpio4 17 GPIO_ACTIVE_HIGH>;
-			enable-active-high;
-		};
-
 		reg_sd2_vmmc: regulator-sd2vmmc {
 			pinctrl-names = "default";
 			pinctrl-0 = <&pinctrl_sd2_vmmc>;
@@ -98,7 +87,6 @@
 	vbus_sel: vbus-sel {
 		compatible = "imx6-vbus-sel";
 		otg1-vbus-reg-supply = <&reg_usbotg1_vbus>;
-		otg2-vbus-reg-supply = <&reg_usbotg2_vbus>;
 	};
 };
 
@@ -222,12 +210,6 @@
 		>;
 	};
 
-	pinctrl_usbotg2_vbus: usbotg2vbusgrp {
-		fsl,pins = <
-			MX6UL_PAD_CSI_MCLK__GPIO4_IO17     0x00008
-		>;
-	};
-
 	pinctrl_sd2_vmmc: sd2vmmcgrp {
 		fsl,pins = <
 			MX6UL_PAD_NAND_ALE__GPIO4_IO10  0x00008
@@ -249,7 +231,6 @@
 };
 
 &usbotg2 {
-	vbus-supply = <&reg_usbotg2_vbus>;
 	dr_mode = "host";
 	disable-over-current;
 	status = "okay";
