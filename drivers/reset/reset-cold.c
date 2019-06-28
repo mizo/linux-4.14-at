@@ -15,6 +15,7 @@
 #include <linux/err.h>
 #include <linux/gpio.h>
 #include <linux/module.h>
+#include <linux/mutex.h>
 #include <linux/of_gpio.h>
 #include <linux/platform_device.h>
 #include <linux/reset.h>
@@ -25,6 +26,8 @@ struct cold_reset_data {
 	struct reset_controller_dev rcdev;
 	struct reset_control *reset;
 	struct regulator *power;
+	struct mutex lock;
+	bool in_reset;
 
 	int num_gpios;
 	int *gpios;
@@ -38,11 +41,27 @@ static int cold_reset_assert(struct reset_controller_dev *rcdev,
 {
 	struct cold_reset_data *drvdata = to_cold_reset_data(rcdev);
 	int i;
+	int ret = 0;
+
+	mutex_lock(&drvdata->lock);
+
+	if (drvdata->in_reset)
+		goto out;
 
 	for (i = 0; i < drvdata->num_gpios; i++)
 		gpio_direction_output(drvdata->gpios[i], 0);
+	if (regulator_is_enabled(drvdata->power)) {
+		ret = regulator_disable(drvdata->power);
+		if (ret)
+			goto out;
+	}
 
-	return regulator_disable(drvdata->power);
+	drvdata->in_reset = true;
+
+out:
+	mutex_unlock(&drvdata->lock);
+
+	return ret;
 }
 
 static int cold_reset_deassert(struct reset_controller_dev *rcdev,
@@ -50,17 +69,27 @@ static int cold_reset_deassert(struct reset_controller_dev *rcdev,
 {
 	struct cold_reset_data *drvdata = to_cold_reset_data(rcdev);
 	int i;
-	int ret;
+	int ret = 0;
+
+	mutex_lock(&drvdata->lock);
+
+	if (!drvdata->in_reset)
+		goto out;
 
 	ret = regulator_enable(drvdata->power);
 	if (ret)
-		return ret;
+		goto out;
 
 	for (i = 0; i < drvdata->num_gpios; i++)
 		gpio_direction_output(drvdata->gpios[i], 1);
 
 	if (drvdata->reset)
 		ret = reset_control_reset(drvdata->reset);
+
+	drvdata->in_reset = false;
+
+out:
+	mutex_unlock(&drvdata->lock);
 
 	return ret;
 }
@@ -220,13 +249,17 @@ static int cold_reset_probe(struct platform_device *pdev)
 	drvdata->rcdev.nr_resets = 1;
 	drvdata->rcdev.ops = &cold_reset_ops;
 	drvdata->rcdev.of_xlate = of_cold_reset_xlate;
+	mutex_init(&drvdata->lock);
 	reset_controller_register(&drvdata->rcdev);
 
 	initially_in_reset = of_property_read_bool(np, "initially-in-reset");
-	if (initially_in_reset)
+	if (initially_in_reset) {
+		drvdata->in_reset = false;
 		cold_reset_assert(&drvdata->rcdev, 0);
-	else
+	} else {
+		drvdata->in_reset = true;
 		cold_reset_deassert(&drvdata->rcdev, 0);
+	}
 
 	ret = sysfs_create_group(&pdev->dev.kobj, &cold_reset_attr_group);
 	if (ret < 0)
