@@ -321,8 +321,6 @@ static int usb3503_probe(struct usb3503 *hub)
 				hub->gpio_reset, err);
 			return err;
 		}
-		gpio_export(hub->gpio_reset, false);
-		gpio_export_link(dev, "USB3503_RESET", hub->gpio_reset);
 	}
 
 	usb3503_switch_mode(hub, hub->mode);
