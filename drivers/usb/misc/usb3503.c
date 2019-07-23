@@ -185,8 +185,39 @@ static const struct regmap_config usb3503_regmap_config = {
 	.max_register = USB3503_RESET,
 };
 
+static ssize_t value_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct usb3503 *hub = i2c_get_clientdata(client);
+
+	int val, ret;
+	ret = kstrtoint(buf, 0, &val);
+	if (ret)
+		return ret;
+
+	if (val)
+		usb3503_switch_mode(hub, USB3503_MODE_HUB);
+	else
+		usb3503_switch_mode(hub, USB3503_MODE_STANDBY);
+
+	return count;
+}
+
+static DEVICE_ATTR_WO(value);
+
+static struct attribute *usb3503_attrs[] = {
+       &dev_attr_value.attr,
+       NULL,
+};
+
+static struct attribute_group usb3503_attr_group = {
+	.name = "USB3503_RESET",
+	.attrs = usb3503_attrs,
+};
+
 static int usb3503_probe(struct usb3503 *hub)
 {
+	const struct attribute_group *grp = &usb3503_attr_group;
 	struct device *dev = hub->dev;
 	struct usb3503_platform_data *pdata = dev_get_platdata(dev);
 	struct device_node *np = dev->of_node;
@@ -327,6 +358,12 @@ static int usb3503_probe(struct usb3503 *hub)
 
 	dev_info(dev, "%s: probed in %s mode\n", __func__,
 			(hub->mode == USB3503_MODE_HUB) ? "hub" : "standby");
+
+	err = sysfs_create_group(&dev->kobj, grp);
+	if (err) {
+		dev_err(dev, "Unable to create sysfs group\n");
+		return err;
+	}
 
 	return 0;
 }
