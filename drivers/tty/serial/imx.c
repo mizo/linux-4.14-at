@@ -423,7 +423,7 @@ static enum hrtimer_restart imx_rs485_before_send(struct hrtimer *timer)
 		writel(temp, sport->port.membase + UCR4);
 
 		temp = readl(sport->port.membase + UCR1);
-		writel(temp | UCR1_TXMPTYEN, sport->port.membase + UCR1);
+		writel(temp | UCR1_TRDYEN, sport->port.membase + UCR1);
 	}
 
 	if (sport->dma_is_enabled) {
@@ -432,7 +432,7 @@ static enum hrtimer_restart imx_rs485_before_send(struct hrtimer *timer)
 			 * disable TX DMA to let TX interrupt to send X-char */
 			temp = readl(sport->port.membase + UCR1);
 			temp &= ~UCR1_TDMAEN;
-			temp |= UCR1_TXMPTYEN;
+			temp |= UCR1_TRDYEN;
 			writel(temp, sport->port.membase + UCR1);
 			goto out;
 		}
@@ -520,7 +520,7 @@ static void imx_stop_tx(struct uart_port *port)
 		return;
 
 	temp = readl(port->membase + UCR1);
-	writel(temp & ~UCR1_TXMPTYEN, port->membase + UCR1);
+	writel(temp & ~UCR1_TRDYEN, port->membase + UCR1);
 
 	/* in rs485 mode disable transmitter if shifter is empty */
 	if (port->rs485.flags & SER_RS485_ENABLED &&
@@ -603,7 +603,7 @@ static inline void imx_transmit_buffer(struct imx_port *sport)
 		 * and the TX IRQ is disabled.
 		 **/
 		temp = readl(sport->port.membase + UCR1);
-		temp &= ~UCR1_TXMPTYEN;
+		temp &= ~UCR1_TRDYEN;
 		if (sport->dma_is_txing) {
 			temp |= UCR1_TDMAEN;
 			writel(temp, sport->port.membase + UCR1);
@@ -766,7 +766,7 @@ static void imx_start_tx(struct uart_port *port)
 
 	if (!sport->dma_is_enabled) {
 		temp = readl(sport->port.membase + UCR1);
-		writel(temp | UCR1_TXMPTYEN, sport->port.membase + UCR1);
+		writel(temp | UCR1_TRDYEN, sport->port.membase + UCR1);
 	}
 
 	if (sport->dma_is_enabled) {
@@ -775,7 +775,7 @@ static void imx_start_tx(struct uart_port *port)
 			 * disable TX DMA to let TX interrupt to send X-char */
 			temp = readl(sport->port.membase + UCR1);
 			temp &= ~UCR1_TDMAEN;
-			temp |= UCR1_TXMPTYEN;
+			temp |= UCR1_TRDYEN;
 			writel(temp, sport->port.membase + UCR1);
 			return;
 		}
@@ -1005,7 +1005,7 @@ static irqreturn_t imx_int(int irq, void *dev_id)
 	}
 
 	if ((sts & USR1_TRDY &&
-	     readl(sport->port.membase + UCR1) & UCR1_TXMPTYEN) ||
+	     readl(sport->port.membase + UCR1) & UCR1_TRDYEN) ||
 	    (sts2 & USR2_TXDC &&
 	     readl(sport->port.membase + UCR4) & UCR4_TCEN))
 		imx_txint(irq, dev_id);
@@ -1622,7 +1622,7 @@ static void imx_shutdown(struct uart_port *port)
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 	temp = readl(sport->port.membase + UCR1);
-	temp &= ~(UCR1_TXMPTYEN | UCR1_RRDYEN | UCR1_RTSDEN | UCR1_UARTEN | UCR1_RDMAEN | UCR1_ATDMAEN);
+	temp &= ~(UCR1_TRDYEN | UCR1_RRDYEN | UCR1_RTSDEN | UCR1_UARTEN | UCR1_RDMAEN | UCR1_ATDMAEN);
 	if (port->rs485.flags & SER_RS485_ENABLED)
 		temp |= UCR1_UARTEN;
 
@@ -1935,7 +1935,7 @@ static int imx_poll_init(struct uart_port *port)
 	if (is_imx1_uart(sport))
 		temp |= IMX1_UCR1_UARTCLKEN;
 	temp |= UCR1_UARTEN;
-	temp &= ~(UCR1_TXMPTYEN | UCR1_RTSDEN | UCR1_RRDYEN);
+	temp &= ~(UCR1_TRDYEN | UCR1_RTSDEN | UCR1_RRDYEN);
 	writel(temp, sport->port.membase + UCR1);
 
 	temp = readl(sport->port.membase + UCR2);
@@ -2087,7 +2087,7 @@ imx_console_write(struct console *co, const char *s, unsigned int count)
 	if (is_imx1_uart(sport))
 		ucr1 |= IMX1_UCR1_UARTCLKEN;
 	ucr1 |= UCR1_UARTEN;
-	ucr1 &= ~(UCR1_TXMPTYEN | UCR1_RRDYEN | UCR1_RTSDEN);
+	ucr1 &= ~(UCR1_TRDYEN | UCR1_RRDYEN | UCR1_RTSDEN);
 
 	writel(ucr1, sport->port.membase + UCR1);
 
@@ -2460,7 +2460,7 @@ static int serial_imx_probe(struct platform_device *pdev)
 	/* Disable interrupts before requesting them */
 	reg = readl_relaxed(sport->port.membase + UCR1);
 	reg &= ~(UCR1_ADEN | UCR1_TRDYEN | UCR1_IDEN | UCR1_RRDYEN |
-		 UCR1_TXMPTYEN | UCR1_RTSDEN);
+		 UCR1_TRDYEN | UCR1_RTSDEN);
 	writel_relaxed(reg, sport->port.membase + UCR1);
 
 	if (!is_imx1_uart(sport) && sport->dte_mode) {
