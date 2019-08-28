@@ -1787,14 +1787,11 @@ imx_set_termios(struct uart_port *port, struct ktermios *termios,
 	uart_update_timeout(port, termios->c_cflag, baud);
 
 	/*
-	 * disable interrupts and drain transmitter
+	 * disable interrupts
 	 */
 	old_ucr1 = readl(sport->port.membase + UCR1);
 	writel(old_ucr1 & ~(UCR1_TXMPTYEN | UCR1_RRDYEN | UCR1_RTSDEN),
 			sport->port.membase + UCR1);
-
-	while (!(readl(sport->port.membase + USR2) & USR2_TXDC))
-		barrier();
 
 	/* then, disable everything */
 	old_txrxen = readl(sport->port.membase + UCR2);
