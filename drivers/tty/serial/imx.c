@@ -1686,7 +1686,7 @@ imx_set_termios(struct uart_port *port, struct ktermios *termios,
 {
 	struct imx_port *sport = (struct imx_port *)port;
 	unsigned long flags;
-	unsigned long ucr2, old_ucr1, old_txrxen, baud, quot;
+	unsigned long ucr2, old_txrxen, baud, quot;
 	unsigned int old_csize = old ? old->c_cflag & CSIZE : CS8;
 	unsigned int div, ufcr;
 	unsigned long num, denom;
@@ -1786,13 +1786,6 @@ imx_set_termios(struct uart_port *port, struct ktermios *termios,
 	 */
 	uart_update_timeout(port, termios->c_cflag, baud);
 
-	/*
-	 * disable interrupts
-	 */
-	old_ucr1 = readl(sport->port.membase + UCR1);
-	writel(old_ucr1 & ~(UCR1_TXMPTYEN | UCR1_RRDYEN | UCR1_RTSDEN),
-			sport->port.membase + UCR1);
-
 	/* then, disable everything */
 	old_txrxen = readl(sport->port.membase + UCR2);
 	writel(old_txrxen & ~(UCR2_TXEN | UCR2_RXEN),
@@ -1832,8 +1825,6 @@ imx_set_termios(struct uart_port *port, struct ktermios *termios,
 	if (!is_imx1_uart(sport))
 		writel(sport->port.uartclk / div / 1000,
 				sport->port.membase + IMX21_ONEMS);
-
-	writel(old_ucr1, sport->port.membase + UCR1);
 
 	/* set the parity, stop bits and data size */
 	writel(ucr2 | old_txrxen, sport->port.membase + UCR2);
