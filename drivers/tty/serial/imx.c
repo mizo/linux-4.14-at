@@ -1689,7 +1689,7 @@ imx_set_termios(struct uart_port *port, struct ktermios *termios,
 	unsigned long ucr2, old_txrxen, baud, quot;
 	unsigned int old_csize = old ? old->c_cflag & CSIZE : CS8;
 	unsigned int div, ufcr;
-	unsigned long num, denom;
+	unsigned long num, denom, old_ubir, old_ubmr;
 	uint64_t tdiv64;
 
 	/*
@@ -1819,8 +1819,21 @@ imx_set_termios(struct uart_port *port, struct ktermios *termios,
 	ufcr = (ufcr & (~UFCR_RFDIV)) | UFCR_RFDIV_REG(div);
 	writel(ufcr, sport->port.membase + UFCR);
 
-	writel(num, sport->port.membase + UBIR);
-	writel(denom, sport->port.membase + UBMR);
+	/*
+	 *  Two registers below should always be written both and in this
+	 *  particular order. One consequence is that we need to check if any of
+	 *  them changes and then update both. We do need the check for change
+	 *  as even writing the same values seem to "restart"
+	 *  transmission/receiving logic in the hardware, that leads to data
+	 *  breakage even when rate doesn't in fact change. E.g., user switches
+	 *  RTS/CTS handshake and suddenly gets broken bytes.
+	 */
+	old_ubir = readl(sport->port.membase + UBIR);
+	old_ubmr = readl(sport->port.membase + UBMR);
+	if (old_ubir != num || old_ubmr != denom) {
+		writel(num, sport->port.membase + UBIR);
+		writel(denom, sport->port.membase + UBMR);
+	}
 
 	if (!is_imx1_uart(sport))
 		writel(sport->port.uartclk / div / 1000,
