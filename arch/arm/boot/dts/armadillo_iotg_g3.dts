@@ -85,7 +85,7 @@
 			regulator-max-microvolt = <3800000>;
 			gpio = <&gpio_bmic 1 GPIO_ACTIVE_LOW>;
 			startup-delay-us = <10000>;
-			off-on-delay-us = <1000000>;
+			off-on-delay = <1000000>;
 		};
 	};
 
