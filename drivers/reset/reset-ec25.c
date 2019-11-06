@@ -223,6 +223,9 @@ static int ec25_reset_probe(struct platform_device *pdev)
 		return ret;
 	}
 
+	gpio_export(drvdata->gpio_status, false);
+	gpio_export_link(&pdev->dev, "ec25_status", drvdata->gpio_status);
+
 	platform_set_drvdata(pdev, drvdata);
 
 	drvdata->abort_safe_reset = false;
@@ -245,6 +248,8 @@ static int ec25_reset_remove(struct platform_device *pdev)
 
 	drvdata->abort_safe_reset = true;
 	cancel_work_sync(&drvdata->work);
+
+	gpio_unexport(drvdata->gpio_status);
 
 	reset_controller_unregister(&drvdata->rcdev);
 
