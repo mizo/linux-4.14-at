@@ -18,9 +18,12 @@
 #include <linux/of_gpio.h>
 #include <linux/platform_device.h>
 #include <linux/reset-controller.h>
+#include <linux/regulator/consumer.h>
 
 struct ec25_reset_data {
 	struct reset_controller_dev rcdev;
+
+	struct regulator *vbat;
 
 	unsigned int gpio_pwrkey;
 	unsigned int gpio_reset;
@@ -32,6 +35,8 @@ struct ec25_reset_data {
 	bool abort_safe_reset;
 
 	struct work_struct work;
+
+	struct device *dev;
 };
 
 #define EC25_PWRKEY_POWER_ON_ASSERT_TIME_MS	(500)
@@ -47,6 +52,35 @@ static void ec25_reset(unsigned int gpio, bool active_low, unsigned long delay_m
 	gpio_set_value_cansleep(gpio, !active_low);
 	mdelay(delay_ms);
 	gpio_set_value_cansleep(gpio, active_low);
+}
+
+static int ec25_power_on(struct ec25_reset_data *drvdata)
+{
+	int ret;
+
+	if (!regulator_is_enabled(drvdata->vbat)) {
+		ret = regulator_enable(drvdata->vbat);
+		if (ret)
+			return ret;
+
+		ec25_reset(drvdata->gpio_pwrkey, drvdata->active_low_pwrkey,
+					EC25_PWRKEY_POWER_ON_ASSERT_TIME_MS);
+	}
+
+	return 0;
+}
+
+static int ec25_power_off(struct ec25_reset_data *drvdata)
+{
+	int ret;
+
+	if (regulator_is_enabled(drvdata->vbat)) {
+		ret = regulator_disable(drvdata->vbat);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
 }
 
 static void ec25_safe_reset(struct reset_controller_dev *rcdev)
@@ -69,10 +103,16 @@ static void ec25_safe_reset(struct reset_controller_dev *rcdev)
 
 			msleep(1);
 		}
+
+		if (ec25_power_off(drvdata)) {
+			dev_err(drvdata->dev,
+				"failed to ec25 safe reset power off\n");
+			return;
+		}
 	}
 
-	ec25_reset(drvdata->gpio_pwrkey,
-			drvdata->active_low_pwrkey, EC25_PWRKEY_POWER_ON_ASSERT_TIME_MS);
+	if (ec25_power_on(drvdata))
+		dev_err(drvdata->dev, "failed to ec25 safe reset power on\n");
 }
 
 static void ec25_safe_reset_work(struct work_struct *ws)
@@ -86,6 +126,7 @@ static void ec25_safe_reset_work(struct work_struct *ws)
 static int ec25_force_reset(struct reset_controller_dev *rcdev, unsigned long id)
 {
 	struct ec25_reset_data *drvdata = to_ec25_reset_data(rcdev);
+	int ret;
 
 	if (!drvdata->abort_safe_reset) {
 		/* Abort safe reset */
@@ -96,8 +137,13 @@ static int ec25_force_reset(struct reset_controller_dev *rcdev, unsigned long id
 	ec25_reset(drvdata->gpio_reset,
 			drvdata->active_low_reset, EC25_RESET_ASSERT_TIME_MS);
 
-	ec25_reset(drvdata->gpio_pwrkey,
-			drvdata->active_low_pwrkey, EC25_PWRKEY_POWER_ON_ASSERT_TIME_MS);
+	ret = ec25_power_off(drvdata);
+	if (ret)
+		return ret;
+
+	ret = ec25_power_on(drvdata);
+	if (ret)
+		return ret;
 
 	return 0;
 }
@@ -125,6 +171,38 @@ static ssize_t ec25_reset_reset_store(struct device *dev,
 }
 static DEVICE_ATTR(reset, S_IWUSR, NULL, ec25_reset_reset_store);
 
+static ssize_t ec25_power_ctrl_store(struct device *dev,
+					struct device_attribute *attr,
+					const char *buf, size_t count)
+{
+	struct platform_device *pdev= to_platform_device(dev);
+	struct ec25_reset_data *drvdata = platform_get_drvdata(pdev);
+	int val, ret;
+
+	ret = kstrtoint(buf, 0, &val);
+	if (ret)
+		return ret;
+
+	if (val)
+		ret = ec25_power_on(drvdata);
+	else
+		ret = ec25_power_off(drvdata);
+
+	return ret ? : count;
+}
+static DEVICE_ATTR(ec25_power_ctrl, S_IWUSR, NULL, ec25_power_ctrl_store);
+
+static struct attribute *ec25_reset_attrs[] = {
+	&dev_attr_reset.attr,
+	&dev_attr_ec25_power_ctrl.attr,
+	NULL
+};
+
+static struct attribute_group ec25_reset_attr_group = {
+	.name = NULL, /* put in device directory */
+	.attrs = ec25_reset_attrs,
+};
+
 static int of_ec25_reset_xlate(struct reset_controller_dev *rcdev,
 				const struct of_phandle_args *reset_spec)
 {
@@ -146,13 +224,23 @@ static int ec25_reset_probe(struct platform_device *pdev)
 	if (drvdata == NULL)
 		return -ENOMEM;
 
+	drvdata->vbat = devm_regulator_get(&pdev->dev, "vbat");
+	if (IS_ERR(drvdata->vbat)) {
+		ret = PTR_ERR(drvdata->vbat);
+		if (ret != -EPROBE_DEFER)
+			dev_err(&pdev->dev, "vbat property missing\n");
+
+		return ret;
+	}
+
 	if (of_gpio_named_count(np, "gpio-pwrkey") != 1) {
 		dev_err(&pdev->dev,
 			"gpio-pwrkey property missing, or not a single gpio\n");
 		return -EINVAL;
 	}
 
-	drvdata->gpio_pwrkey = of_get_named_gpio_flags(np, "gpio-pwrkey", 0, &flags);
+	drvdata->gpio_pwrkey = of_get_named_gpio_flags(np,
+						"gpio-pwrkey", 0, &flags);
 	if (drvdata->gpio_pwrkey == -EPROBE_DEFER) {
 		return drvdata->gpio_pwrkey;
 	} else if (!gpio_is_valid(drvdata->gpio_pwrkey)) {
@@ -223,6 +311,18 @@ static int ec25_reset_probe(struct platform_device *pdev)
 		return ret;
 	}
 
+	ret = regulator_enable(drvdata->vbat);
+	if (ret) {
+		dev_err(&pdev->dev, "failed to enable vbat regulator: %d\n",
+									ret);
+		return ret;
+	}
+
+	ec25_reset(drvdata->gpio_pwrkey, drvdata->active_low_pwrkey,
+					EC25_PWRKEY_POWER_ON_ASSERT_TIME_MS);
+
+	drvdata->dev = &pdev->dev;
+
 	gpio_export(drvdata->gpio_status, false);
 	gpio_export_link(&pdev->dev, "ec25_status", drvdata->gpio_status);
 
@@ -239,7 +339,7 @@ static int ec25_reset_probe(struct platform_device *pdev)
 	drvdata->rcdev.of_xlate = of_ec25_reset_xlate;
 	reset_controller_register(&drvdata->rcdev);
 
-	return device_create_file(&pdev->dev, &dev_attr_reset);
+	return sysfs_create_group(&pdev->dev.kobj, &ec25_reset_attr_group);
 }
 
 static int ec25_reset_remove(struct platform_device *pdev)
@@ -252,6 +352,8 @@ static int ec25_reset_remove(struct platform_device *pdev)
 	gpio_unexport(drvdata->gpio_status);
 
 	reset_controller_unregister(&drvdata->rcdev);
+
+	sysfs_remove_group(&pdev->dev.kobj, &ec25_reset_attr_group);
 
 	return 0;
 }
