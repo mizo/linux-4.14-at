@@ -77,6 +77,17 @@
 			enable-active-high;
 			regulator-boot-on;
 		};
+
+		reg_ec25_vbat: regulator-2 {
+			compatible = "regulator-fixed";
+			regulator-name = "EC25_VBAT";
+			regulator-min-microvolt = <3800000>;
+			regulator-max-microvolt = <3800000>;
+			gpio = <&gpio_bmic 1 GPIO_ACTIVE_LOW>;
+			off-on-delay = <100000>;
+			startup-delay-us = <30000>;
+			regulator-boot-on;
+		};
 	};
 
 	ec25_reset: ec25-reset {
@@ -86,6 +97,7 @@
 		gpio-pwrkey = <&gpio4 17 GPIO_ACTIVE_HIGH>;
 		gpio-reset = <&gpio4 18 GPIO_ACTIVE_HIGH>;
 		gpio-status = <&gpio3 28 GPIO_ACTIVE_HIGH>;
+		vbat-supply = <&reg_ec25_vbat>;
 	};
 
 	gpio-keys {
@@ -654,14 +666,5 @@
 		gpios = <21 GPIO_ACTIVE_LOW>;
 		output-low;
 		line-name = "EC25_USB_VBUS";
-	};
-};
-
-&gpio_bmic {
-	ec25_power {
-		gpio-hog;
-		gpios = <&gpio_bmic 1 GPIO_ACTIVE_LOW>;
-		output-low;
-		line-name = "EC25_POWER";
 	};
 };
