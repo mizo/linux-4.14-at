@@ -787,13 +787,10 @@ static void imx_start_tx(struct uart_port *port)
 	}
 }
 
-static irqreturn_t imx_rtsint(int irq, void *dev_id)
+static irqreturn_t __imx_rtsint(int irq, void *dev_id)
 {
 	struct imx_port *sport = dev_id;
 	unsigned int val;
-	unsigned long flags;
-
-	spin_lock_irqsave(&sport->port.lock, flags);
 
 	writel(USR1_RTSD, sport->port.membase + USR1);
 	if (!(sport->port.rs485.flags & SER_RS485_ENABLED)) {
@@ -808,8 +805,21 @@ static irqreturn_t imx_rtsint(int irq, void *dev_id)
 		wake_up_interruptible(&sport->port.state->port.delta_msr_wait);
 	}
 
-	spin_unlock_irqrestore(&sport->port.lock, flags);
 	return IRQ_HANDLED;
+}
+
+static irqreturn_t imx_rtsint(int irq, void *dev_id)
+{
+	struct imx_port *sport = dev_id;
+	unsigned long flags;
+	irqreturn_t ret;
+
+	spin_lock_irqsave(&sport->port.lock, flags);
+
+	ret = __imx_rtsint(irq, dev_id);
+
+	spin_unlock_irqrestore(&sport->port.lock, flags);
+	return ret;
 }
 
 static irqreturn_t imx_txint(int irq, void *dev_id)
@@ -823,40 +833,26 @@ static irqreturn_t imx_txint(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-static irqreturn_t imx_rxint(int irq, void *dev_id)
+static irqreturn_t __imx_rxint(int irq, void *dev_id)
 {
 	struct imx_port *sport = dev_id;
 	unsigned int rx, flg, ignored = 0;
 	struct tty_port *port = &sport->port.state->port;
-	unsigned long flags, temp;
+	unsigned long temp;
 	unsigned long ucr1;
-	int room;
 	unsigned char chars_buf[sport->port.fifosize];
 	char flags_buf[sport->port.fifosize];
 	unsigned int rx_count = 0;
 	int inserted;
 
-	room = tty_buffer_request_room(port, sport->port.fifosize);
-
-	spin_lock_irqsave(&sport->port.lock, flags);
-
 	ucr1 = readl(sport->port.membase + UCR1);
-
-	if (!room) {
-		if (ucr1 & UCR1_RRDYEN) {
-			ucr1 &= ~UCR1_RRDYEN;
-			writel(ucr1, sport->port.membase + UCR1);
-		}
-		spin_unlock_irqrestore(&sport->port.lock, flags);
-		return IRQ_HANDLED;
-	}
 
 	if (~ucr1 & UCR1_RRDYEN) {
 		ucr1 |= UCR1_RRDYEN;
 		writel(ucr1, sport->port.membase + UCR1);
 	}
 
-	while ((readl(sport->port.membase + USR2) & USR2_RDR) && (room > 0)) {
+	while ((readl(sport->port.membase + USR2) & USR2_RDR)) {
 		flg = TTY_NORMAL;
 		sport->port.icount.rx++;
 
@@ -910,7 +906,6 @@ static irqreturn_t imx_rxint(int irq, void *dev_id)
 		chars_buf[rx_count] = rx;
 		flags_buf[rx_count] = flg;
 		rx_count++;
-		room--;
 	}
 
 out:
@@ -923,9 +918,22 @@ out:
 			sport->port.icount.buf_overrun++;
 		}
 	}
-	spin_unlock_irqrestore(&sport->port.lock, flags);
 	tty_flip_buffer_push(port);
 	return IRQ_HANDLED;
+}
+
+static irqreturn_t imx_rxint(int irq, void *dev_id)
+{
+	struct imx_port *sport = dev_id;
+	unsigned long flags;
+	irqreturn_t ret;
+
+	spin_lock_irqsave(&sport->port.lock, flags);
+
+	ret = __imx_rxint(irq, dev_id);
+
+	spin_unlock_irqrestore(&sport->port.lock, flags);
+	return ret;
 }
 
 /*
@@ -993,6 +1001,9 @@ static irqreturn_t imx_int(int irq, void *dev_id)
 	struct imx_port *sport = dev_id;
 	unsigned int sts;
 	unsigned int sts2;
+	unsigned long flags;
+
+	spin_lock_irqsave(&sport->port.lock, flags);
 
 	sts = readl(sport->port.membase + USR1);
 	sts2 = readl(sport->port.membase + USR2);
@@ -1001,28 +1012,24 @@ static irqreturn_t imx_int(int irq, void *dev_id)
 		!sport->dma_is_enabled) {
 		if (sts & USR1_AGTIM)
 			writel(USR1_AGTIM, sport->port.membase + USR1);
-		imx_rxint(irq, dev_id);
+		__imx_rxint(irq, dev_id);
 	}
 
 	if ((sts & USR1_TRDY &&
 	     readl(sport->port.membase + UCR1) & UCR1_TRDYEN) ||
 	    (sts2 & USR2_TXDC &&
 	     readl(sport->port.membase + UCR4) & UCR4_TCEN))
-		imx_txint(irq, dev_id);
+		imx_transmit_buffer(sport);
 
 	if (sts & USR1_DTRD) {
-		unsigned long flags;
-
 		if (sts & USR1_DTRD)
 			writel(USR1_DTRD, sport->port.membase + USR1);
 
-		spin_lock_irqsave(&sport->port.lock, flags);
 		imx_mctrl_check(sport);
-		spin_unlock_irqrestore(&sport->port.lock, flags);
 	}
 
 	if (sts & USR1_RTSD)
-		imx_rtsint(irq, dev_id);
+		__imx_rtsint(irq, dev_id);
 
 	if (sts & USR1_AWAKE)
 		writel(USR1_AWAKE, sport->port.membase + USR1);
@@ -1031,6 +1038,8 @@ static irqreturn_t imx_int(int irq, void *dev_id)
 		sport->port.icount.overrun++;
 		writel(USR2_ORE, sport->port.membase + USR2);
 	}
+
+	spin_unlock_irqrestore(&sport->port.lock, flags);
 
 	return IRQ_HANDLED;
 }
