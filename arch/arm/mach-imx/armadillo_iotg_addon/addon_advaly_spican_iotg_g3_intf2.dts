@@ -17,7 +17,7 @@
 	fragment@0 {
 		target = <&iomuxc>;
 		__overlay__ {
-			addon-intf1 {
+			addon-intf2 {
 				pinctrl_ecspi1: ecspi1grp {
 					fsl,pins = <
 						MX7D_PAD_UART2_RX_DATA__GPIO4_IO2	0x00	/* INTF2_32 */
