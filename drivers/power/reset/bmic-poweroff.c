@@ -9,6 +9,8 @@
  * published by the Free Software Foundation.
  *
  */
+#include <linux/reboot.h>
+#include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/delay.h>
@@ -19,11 +21,19 @@
 #define BMIC_POWEROFF_MAJOR_VERSION(v)	((v >> 8) & 0xff)
 #define BMIC_POWEROFF_MINOR_VERSION(v)	(v & 0xff)
 
+#define MINIMUM_RESTART_DELAY (1)
+
 #define REG_VERSION	0x01
 #define REG_TIME	0x04
 
 struct bmic_poweroff {
 	struct i2c_client *client;
+};
+
+struct bmic_restart {
+	struct notifier_block restart_handler;
+	struct i2c_client *client;
+	u32 delay;
 };
 
 static struct gpio_desc *reset_gpio;
@@ -100,6 +110,24 @@ static ssize_t turn_on_delay_store(struct device *dev,
 	return count;
 }
 
+static int bmic_restart_notify(struct notifier_block *this,
+			       unsigned long mode, void *cmd)
+{
+	int ret;
+	struct bmic_restart *bmic_restart =
+		container_of(this, struct bmic_restart, restart_handler);
+
+	/* override turn-on-delay */
+	ret = bmic_poweroff_set_turn_on_delay(bmic_restart->client,
+					      bmic_restart->delay);
+	if (ret)
+		return NOTIFY_BAD;
+
+	bmic_poweroff_do_poweroff();
+
+	return NOTIFY_DONE;
+}
+
 static DEVICE_ATTR(turn_on_delay, S_IRUGO | S_IWUSR,
 		   turn_on_delay_show, turn_on_delay_store);
 
@@ -119,6 +147,7 @@ static int bmic_poweroff_probe(struct i2c_client *client,
 	struct bmic_poweroff *poweroff;
 	struct device *dev = &client->dev;
 	struct device_node *of_node = dev->of_node;
+	struct bmic_restart *bmic_restart;
 	u32 delay;
 	int ver;
 	int ret;
@@ -165,11 +194,40 @@ static int bmic_poweroff_probe(struct i2c_client *client,
 		dev_info(dev, "overrided pm_power_off function");
 	pm_power_off = &bmic_poweroff_do_poweroff;
 
+	bmic_restart = devm_kzalloc(dev, sizeof(*bmic_restart),
+				    GFP_KERNEL);
+	if (!bmic_restart)
+		return -ENOMEM;
+
+	ret = of_property_read_u32(of_node, "restart-delay", &delay);
+	if (ret || !delay) {
+		dev_warn(dev, "restart-delay uses the default value 1\n");
+		delay = MINIMUM_RESTART_DELAY;
+	}
+
+	bmic_restart->restart_handler.notifier_call = bmic_restart_notify;
+	bmic_restart->restart_handler.priority = 192;
+	bmic_restart->delay = delay;
+	bmic_restart->client = client;
+
+	ret = register_restart_handler(&bmic_restart->restart_handler);
+	if (ret) {
+		dev_err(dev, "cannot register restart handler\n");
+		return -ENODEV;
+	}
+
 	return 0;
 }
 
 static int bmic_poweroff_remove(struct i2c_client *client)
 {
+	struct bmic_restart *bmic_restart = dev_get_drvdata(&client->dev);
+	int ret;
+
+	ret = unregister_restart_handler(&bmic_restart->restart_handler);
+	if (ret)
+		dev_warn(&client->dev,"cannot unregister restart handler\n");
+
 	if (pm_power_off == &bmic_poweroff_do_poweroff)
 		pm_power_off = NULL;
 
