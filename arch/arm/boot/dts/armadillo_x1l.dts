@@ -202,6 +202,7 @@
 		reg = <0x18>;
 		gpios = <&gpio_bmic 0 GPIO_ACTIVE_HIGH>;
 		turn-on-delay = <0>; /* a value of 0 means "do not turn on" */
+		restart-delay = <1>; /* specify a value greater than 1 second */
 	};
 
 	pmic: pfuze3000@09 {
