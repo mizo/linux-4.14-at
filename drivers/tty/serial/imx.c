@@ -535,6 +535,25 @@ static void imx_stop_rx(struct uart_port *port)
 	}
 }
 
+static void imx_rx_safe_disable(struct imx_port *sport)
+{
+        unsigned long temp;
+        //Disable Receiver Ready and Overrun interrupt
+        temp = readl(sport->port.membase + UCR1);
+        writel(temp & ~UCR1_RRDYEN, sport->port.membase + UCR1);
+        temp = readl(sport->port.membase + UCR4);
+        writel(temp & ~UCR4_OREN, sport->port.membase + UCR4);
+        temp = readl(sport->port.membase + UCR2);
+        //Enable Receiver
+        writel(temp | UCR2_RXEN, sport->port.membase + UCR2);
+        //Read Receiver Register to clear FIFO
+        while (readl(sport->port.membase + USR2) & USR2_RDR)
+                readl(sport->port.membase + URXD0);
+        //Disable Receiver
+        writel(temp & ~UCR2_RXEN, sport->port.membase + UCR2);
+}
+
+
 /*
  * Set the modem control timer to fire immediately.
  */
@@ -717,7 +736,7 @@ static void imx_start_tx(struct uart_port *port)
 		else
 			imx_port_rts_active(sport, &temp);
 		if (!(port->rs485.flags & SER_RS485_RX_DURING_TX))
-			temp &= ~UCR2_RXEN;
+			imx_rx_safe_disable(sport);
 		writel(temp, port->membase + UCR2);
 
 		imx_rs485_hrtimer_start(&sport->rs485_before_send,
