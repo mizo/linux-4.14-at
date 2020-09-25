@@ -551,7 +551,8 @@ static void imx_stop_rx(struct uart_port *port)
 	temp = readl(sport->port.membase + UCR4);
 	writel(temp & ~UCR4_OREN, sport->port.membase + UCR4);
 
-	if (!(port->rs485.flags & SER_RS485_ENABLED)) {
+	if ((port->rs485.flags & SER_RS485_ENABLED) &&
+			!(port->rs485.flags & SER_RS485_RX_DURING_TX)) {
 		temp = readl(sport->port.membase + UCR2);
 		writel(temp & ~UCR2_RXEN, sport->port.membase + UCR2);
 	}
