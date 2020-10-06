@@ -706,6 +706,7 @@ static void dma_tx_work(struct work_struct *w)
 						DMA_MEM_TO_DEV, DMA_PREP_INTERRUPT);
 		if (!desc) {
 			dev_err(dev, "We cannot prepare for the TX slave dma!\n");
+			dma_unmap_sg(dev, sgl, sport->dma_tx_nents, DMA_TO_DEVICE);
 			goto err_out;
 		}
 		desc->callback = dma_tx_callback;
