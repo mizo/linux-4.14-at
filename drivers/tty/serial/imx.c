@@ -716,14 +716,16 @@ static void imx_dma_tx(struct imx_port *sport)
 
 		dev_dbg(dev, "TX: prepare to send %lu bytes by DMA.\n",
 				uart_circ_chars_pending(xmit));
+
+		temp = readl(sport->port.membase + UCR1);
+		temp |= UCR1_TDMAEN;
+		writel(temp, sport->port.membase + UCR1);
+
 		/* fire it */
 		sport->dma_is_txing = 1;
 		dmaengine_submit(desc);
 		dma_async_issue_pending(chan);
 
-		temp = readl(sport->port.membase + UCR1);
-		temp |= UCR1_TDMAEN;
-		writel(temp, sport->port.membase + UCR1);
 		return;
 	}
 
