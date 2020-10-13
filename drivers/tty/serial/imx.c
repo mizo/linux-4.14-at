@@ -590,12 +590,6 @@ static inline void imx_transmit_buffer(struct imx_port *sport)
 	}
 
 	if (sport->dma_is_enabled) {
-		if (sport->port.rs485.flags & SER_RS485_ENABLED) {
-			temp = readl(sport->port.membase + UCR4);
-			temp &= ~UCR4_TCEN;
-			writel(temp, sport->port.membase + UCR4);
-		}
-
 		/*
 		 * We've just sent a X-char Ensure the TX DMA is enabled
 		 * and the TX IRQ is disabled.
@@ -684,6 +678,10 @@ static void imx_dma_tx(struct imx_port *sport)
 
 	if (sport->dma_is_txing)
 		return;
+
+	temp = readl(sport->port.membase + UCR4);
+	temp &= ~UCR4_TCEN;
+	writel(temp, sport->port.membase + UCR4);
 
 	sport->tx_bytes = uart_circ_chars_pending(xmit);
 
