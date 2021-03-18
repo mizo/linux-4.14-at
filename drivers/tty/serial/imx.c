@@ -1236,12 +1236,14 @@ static void imx_rs485_set_duplex(struct imx_port *sport, int duplex)
 }
 
 /*
- * There are two kinds of RX DMA interrupts(such as in the MX6Q):
+ * There are three kinds of RX DMA interrupts(such as in the MX6Q):
  *   [1] the RX DMA buffer is full.
- *   [2] the Aging timer expires
+ *   [2] the Aging timer expires(wait for 8 bytes long)
+ *   [3] the Idle Condition Detect(enabled the UCR4_IDDMAEN).
  *
- * Condition [2] is triggered when a character has been sitting in the FIFO
- * for at least 8 byte durations.
+ * The [2] is trigger when a character was been sitting in the FIFO
+ * meanwhile [3] can wait for 32 bytes long when the RX line is
+ * on IDLE state and RxFIFO is empty.
  */
 static void dma_rx_callback(void *data)
 {
@@ -1402,8 +1404,15 @@ static void imx_enable_dma(struct imx_port *sport)
 
 	/* set UCR1 */
 	temp = readl(sport->port.membase + UCR1);
-	temp |= UCR1_RDMAEN | UCR1_TDMAEN | UCR1_ATDMAEN;
+	temp |= UCR1_RDMAEN | UCR1_TDMAEN | UCR1_ATDMAEN |
+		/* wait for 32 idle frames for IDDMA interrupt */
+		UCR1_ICD_REG(3);
 	writel(temp, sport->port.membase + UCR1);
+
+	/* set UCR4 */
+	temp = readl(sport->port.membase + UCR4);
+	temp |= UCR4_IDDMAEN;
+	writel(temp, sport->port.membase + UCR4);
 
 	sport->dma_is_enabled = 1;
 }
@@ -1421,6 +1430,11 @@ static void imx_disable_dma(struct imx_port *sport)
 	temp = readl(sport->port.membase + UCR2);
 	temp &= ~(UCR2_CTSC | UCR2_CTS);
 	writel(temp, sport->port.membase + UCR2);
+
+	/* clear UCR4 */
+	temp = readl(sport->port.membase + UCR4);
+	temp &= ~UCR4_IDDMAEN;
+	writel(temp, sport->port.membase + UCR4);
 
 	sport->dma_is_enabled = 0;
 }
