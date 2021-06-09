@@ -26,6 +26,7 @@
 #include <linux/slab.h>
 #include <linux/thermal.h>
 #include <linux/types.h>
+#include <linux/nvmem-consumer.h>
 
 #define REG_SET		0x4
 #define REG_CLR		0x8
@@ -222,7 +223,7 @@ struct imx_thermal_data {
 	struct thermal_cooling_device *cdev[2];
 	enum thermal_device_mode mode;
 	struct regmap *tempmon;
-	u32 c1, c2; /* See formula in imx_get_sensor_data() */
+	u32 c1, c2; /* See formula in imx_init_calib() */
 	int temp_passive;
 	int temp_critical;
 	int temp_max;
@@ -342,7 +343,7 @@ static int imx_get_temp(struct thermal_zone_device *tz, int *temp)
 	}
 
 	n_meas = (val & soc_data->temp_value_mask) >> soc_data->temp_value_shift;
-	/* See imx_get_sensor_data() for formula derivation */
+	/* See imx_init_calib() for formula derivation */
 	*temp = data->c2 - n_meas * data->c1;
 	if (data->socdata->version == TEMPMON_IMX7)
 		*temp = 25 * 1000 + 870 * (n_meas - data->c1);
@@ -539,10 +540,11 @@ static struct thermal_zone_device_ops imx_tz_ops = {
 	.get_trend = imx_get_trend,
 };
 
-static inline void imx6_calibrate_data(struct imx_thermal_data *data, u32 val)
+static void imx6_calibrate_data(struct imx_thermal_data *data, u32 val)
 {
 	int t1, t2, n1, n2;
 	u64 temp64;
+
 	/*
 	 * Sensor data layout:
 	 *   [31:20] - sensor value @ 25C
@@ -591,30 +593,9 @@ static inline void imx7_calibrate_data(struct imx_thermal_data *data, u32 val)
 	data->c1 = (val >> 9) & 0x1ff;
 }
 
-static int imx_get_sensor_data(struct platform_device *pdev)
+static int imx_init_calib(struct platform_device *pdev, u32 val)
 {
 	struct imx_thermal_data *data = platform_get_drvdata(pdev);
-	struct regmap *map;
-	int ret;
-	u32 val;
-
-	map = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
-					      "fsl,tempmon-data");
-	if (IS_ERR(map)) {
-		ret = PTR_ERR(map);
-		dev_err(&pdev->dev, "failed to get sensor regmap: %d\n", ret);
-		return ret;
-	}
-
-	if (data->socdata->version == TEMPMON_IMX7)
-		ret = regmap_read(map, IMX7_OCOTP_ANA1, &val);
-	else
-		ret = regmap_read(map, IMX6_OCOTP_ANA1, &val);
-
-	if (ret) {
-		dev_err(&pdev->dev, "failed to read sensor data: %d\n", ret);
-		return ret;
-	}
 
 	if (val == 0 || val == ~0) {
 		dev_err(&pdev->dev, "invalid sensor calibration data\n");
@@ -626,16 +607,12 @@ static int imx_get_sensor_data(struct platform_device *pdev)
 	else
 		imx6_calibrate_data(data, val);
 
-	/* use OTP for thermal grade */
-	if (data->socdata->version == TEMPMON_IMX7)
-		ret = regmap_read(map, IMX7_OCOTP_TESTER3, &val);
-	else
-		ret = regmap_read(map, OCOTP_MEM0, &val);
+	return 0;
+}
 
-	if (ret) {
-		dev_err(&pdev->dev, "failed to read temp grade: %d\n", ret);
-		return ret;
-	}
+static void imx_init_temp_grade(struct platform_device *pdev, u32 val)
+{
+	struct imx_thermal_data *data = platform_get_drvdata(pdev);
 
 	/* The maximum die temp is specified by the Temperature Grade */
 	switch ((val >> 6) & 0x3) {
@@ -663,6 +640,73 @@ static int imx_get_sensor_data(struct platform_device *pdev)
 	 */
 	data->temp_critical = data->temp_max - (1000 * 5);
 	data->temp_passive = data->temp_max - (1000 * 10);
+}
+
+static int imx_init_from_tempmon_data(struct platform_device *pdev)
+{
+	struct imx_thermal_data *data = platform_get_drvdata(pdev);
+	struct device_node *np;
+	struct nvmem_device *nvdev;
+	int ret;
+	u32 val;
+
+	np = of_parse_phandle(pdev->dev.of_node, "fsl,tempmon-data", 0);
+	if (!np) {
+		dev_err(&pdev->dev, "failed to get sensor device node\n");
+		return -ENOENT;
+	}
+
+	nvdev = of_nvmem_find(np);
+	of_node_put(np);
+	if (!nvdev) {
+		dev_err(&pdev->dev, "failed to get nvmem device\n");
+		return -ENOENT;
+	}
+
+	if (data->socdata->version == TEMPMON_IMX7)
+		ret = nvmem_device_read(nvdev, IMX7_OCOTP_ANA1, 4, &val);
+	else
+		ret = nvmem_device_read(nvdev, IMX6_OCOTP_ANA1, 4, &val);
+	if (ret < 0) {
+		nvmem_device_put(nvdev);
+		dev_err(&pdev->dev, "failed to read sensor data: %d\n", ret);
+		return ret;
+	}
+	ret = imx_init_calib(pdev, val);
+	if (ret) {
+		nvmem_device_put(nvdev);
+		return ret;
+	}
+
+	/* use OTP for thermal grade */
+	if (data->socdata->version == TEMPMON_IMX7)
+		ret = nvmem_device_read(nvdev, IMX7_OCOTP_TESTER3, 4, &val);
+	else
+		ret = nvmem_device_read(nvdev, OCOTP_MEM0, 4, &val);
+	nvmem_device_put(nvdev);
+	if (ret < 0) {
+		dev_err(&pdev->dev, "failed to read temp grade: %d\n", ret);
+		return ret;
+	}
+	imx_init_temp_grade(pdev, val);
+
+	return 0;
+}
+
+static int imx_init_from_nvmem_cells(struct platform_device *pdev)
+{
+	int ret;
+	u32 val;
+
+	ret = nvmem_cell_read_u32(&pdev->dev, "calib", &val);
+	if (ret < 0)
+		return ret;
+	imx_init_calib(pdev, val);
+
+	ret = nvmem_cell_read_u32(&pdev->dev, "temp_grade", &val);
+	if (ret < 0)
+		return ret;
+	imx_init_temp_grade(pdev, val);
 
 	return 0;
 }
@@ -783,10 +827,21 @@ static int imx_thermal_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, data);
 
-	ret = imx_get_sensor_data(pdev);
-	if (ret) {
-		dev_err(&pdev->dev, "failed to get sensor data\n");
-		return ret;
+	if (of_find_property(pdev->dev.of_node, "nvmem-cells", NULL)) {
+		ret = imx_init_from_nvmem_cells(pdev);
+		if (ret == -EPROBE_DEFER)
+			return ret;
+		if (ret) {
+			dev_err(&pdev->dev, "failed to init from nvmem: %d\n",
+				ret);
+			return ret;
+		}
+	} else {
+		ret = imx_init_from_tempmon_data(pdev);
+		if (ret) {
+			dev_err(&pdev->dev, "failed to init from from fsl,tempmon-data\n");
+			return ret;
+		}
 	}
 
 	/*

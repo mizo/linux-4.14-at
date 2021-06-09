@@ -35,6 +35,8 @@ void nvmem_cell_put(struct nvmem_cell *cell);
 void devm_nvmem_cell_put(struct device *dev, struct nvmem_cell *cell);
 void *nvmem_cell_read(struct nvmem_cell *cell, size_t *len);
 int nvmem_cell_write(struct nvmem_cell *cell, void *buf, size_t len);
+int nvmem_cell_read_u16(struct device *dev, const char *cell_id, u16 *val);
+int nvmem_cell_read_u32(struct device *dev, const char *cell_id, u32 *val);
 
 /* direct nvmem device read/write interface */
 struct nvmem_device *nvmem_device_get(struct device *dev, const char *name);
@@ -50,6 +52,7 @@ ssize_t nvmem_device_cell_read(struct nvmem_device *nvmem,
 			   struct nvmem_cell_info *info, void *buf);
 int nvmem_device_cell_write(struct nvmem_device *nvmem,
 			    struct nvmem_cell_info *info, void *buf);
+struct nvmem_device *of_nvmem_find(struct device_node *nvmem_np);
 
 #else
 
@@ -81,6 +84,18 @@ static inline void *nvmem_cell_read(struct nvmem_cell *cell, size_t *len)
 
 static inline int nvmem_cell_write(struct nvmem_cell *cell,
 				    const char *buf, size_t len)
+{
+	return -ENOSYS;
+}
+
+static inline int nvmem_cell_read_u16(struct device *dev,
+				      const char *cell_id, u16 *val)
+{
+	return -EOPNOTSUPP;
+}
+
+static inline int nvmem_cell_read_u32(struct device *dev,
+				      const char *cell_id, u32 *val)
 {
 	return -ENOSYS;
 }
@@ -132,6 +147,11 @@ static inline int nvmem_device_write(struct nvmem_device *nvmem,
 				     void *buf)
 {
 	return -ENOSYS;
+}
+
+static inline struct nvmem_device *of_nvmem_find(struct device_node *nvmem_np)
+{
+	return NULL;
 }
 #endif /* CONFIG_NVMEM */
 

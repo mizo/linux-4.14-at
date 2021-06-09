@@ -239,13 +239,21 @@
 		reg = <0x30350000 0x10000>;
 		clocks = <&clks IMX7D_OCOTP_CLK>;
 		status = "okay";
+		tempmon_calib: calib@3c {
+			reg = <0x3c 4>;
+		};
+
+		tempmon_temp_grade: temp-grade@10 {
+			reg = <0x10 4>;
+		};
 	};
 
 	tempmon: tempmon {
 		compatible = "fsl,imx7d-tempmon";
 		interrupts = <GIC_SPI 49 IRQ_TYPE_LEVEL_HIGH>;
 		fsl,tempmon =<&anatop>;
-		fsl,tempmon-data = <&ocotp>;
+		nvmem-cells = <&tempmon_calib>, <&tempmon_temp_grade>;
+		nvmem-cell-names = "calib", "temp_grade";
 		clocks = <&clks IMX7D_PLL_SYS_MAIN_CLK>;
 	};
 
